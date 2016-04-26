@@ -1,0 +1,24 @@
+D:\Teaching\Recommender systems\RecSys2014\Assignment 1\bin\Debug\Assignment1.exe
+D:\Teaching\Recommender systems\RecSys2014\Assignment 1\bin\Debug\Assignment1.pdb
+D:\Teaching\Recommender systems\RecSys2014\Assignment 1\obj\x86\Debug\Assignment1.exe
+D:\Teaching\Recommender systems\RecSys2014\Assignment 1\obj\x86\Debug\Assignment1.pdb
+D:\Teaching\Recommender systems\RecSys2015\Assignment 1\obj\x86\Debug\Assignment1.exe
+D:\Teaching\Recommender systems\RecSys2015\Assignment 1\obj\x86\Debug\Assignment1.pdb
+D:\teaching\Recommender systems\RecSys2016\Assignment 1\obj\x86\Debug\Assignment1.exe
+D:\teaching\Recommender systems\RecSys2016\Assignment 1\obj\x86\Debug\Assignment1.pdb
+D:\teaching\Recommender systems\RecSys2016\Assignment 1\bin\Debug\Assignment1.exe
+D:\teaching\Recommender systems\RecSys2016\Assignment 1\bin\Debug\Assignment1.pdb
+C:\Users\user\Desktop\Assignment 1\obj\x86\Debug\Assignment1.exe
+C:\Users\user\Desktop\Assignment 1\obj\x86\Debug\Assignment1.pdb
+C:\Users\user\Desktop\עבודה 1 גיא שני\Assignment 1\obj\x86\Debug\Assignment1.exe
+C:\Users\user\Desktop\עבודה 1 גיא שני\Assignment 1\obj\x86\Debug\Assignment1.pdb
+C:\Users\user\Desktop\עבודה 1 גיא שני\Assignment 1\obj\x86\Debug\Assignment1.csprojResolveAssemblyReference.cache
+C:\Users\user\Desktop\עבודה 1 גיא שני\Assignment 1\bin\Debug\Assignment1.exe
+C:\Users\user\Desktop\עבודה 1 גיא שני\Assignment 1\bin\Debug\Assignment1.pdb
+C:\Users\Shinitzky\Desktop\לימודים\סמסטר ח\204079446_301722674\obj\x86\Debug\Assignment1.exe
+C:\Users\Shinitzky\Desktop\לימודים\סמסטר ח\204079446_301722674\obj\x86\Debug\Assignment1.pdb
+C:\Users\Shinitzky\Desktop\לימודים\סמסטר ח\204079446_301722674\bin\Debug\Assignment1.exe
+C:\Users\Shinitzky\Desktop\לימודים\סמסטר ח\204079446_301722674\bin\Debug\Assignment1.pdb
+C:\Users\Shinitzky\Desktop\לימודים\סמסטר ח\204079446_301722674\obj\x86\Debug\Assignment1.csprojResolveAssemblyReference.cache
+C:\Users\Tomer\Documents\GitHub\Rec_Ass2\obj\x86\Debug\Assignment1.exe
+C:\Users\Tomer\Documents\GitHub\Rec_Ass2\obj\x86\Debug\Assignment1.pdb
