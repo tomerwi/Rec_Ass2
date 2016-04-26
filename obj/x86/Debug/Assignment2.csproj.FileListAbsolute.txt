@@ -3,3 +3,5 @@ C:\Users\Tomer\Documents\GitHub\Rec_Ass2\bin\Debug\Assignment2.exe
 C:\Users\Tomer\Documents\GitHub\Rec_Ass2\bin\Debug\Assignment2.pdb
 C:\Users\Tomer\Documents\GitHub\Rec_Ass2\obj\x86\Debug\Assignment2.exe
 C:\Users\Tomer\Documents\GitHub\Rec_Ass2\obj\x86\Debug\Assignment2.pdb
+C:\Users\user\Desktop\לימודים\גיישה\Assignment 2\Rec_Ass2\obj\x86\Debug\Assignment2.exe
+C:\Users\user\Desktop\לימודים\גיישה\Assignment 2\Rec_Ass2\obj\x86\Debug\Assignment2.pdb

@@ -476,9 +476,6 @@ namespace RecommenderSystem
             double mue = computeMue(); //compute the avarage rating of all the users in the training data
             Random r = new Random();
             
-            
-
-            
         }
 
         private double computeMue() 
