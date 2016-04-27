@@ -540,9 +540,9 @@ namespace RecommenderSystem
             Dictionary<int, HashSet<int>> used = new Dictionary<int, HashSet<int>>();
             int iterationNumber = 0;
             Random r = new Random();
-            double pearsonMAE = 0;
-            double cosineMAE = 0;
-            double randomMAE = 0;
+            double pearsonRMSE = 0;
+            double cosineRMSE = 0;
+            double randomRMSE = 0;
             while (iterationNumber < cTrials)
             {
                 bool foundNotUsed = false;
@@ -571,7 +571,7 @@ namespace RecommenderSystem
                     if (pearsonRating == -1) //invalid user or movie
                         continue;
                     double pearsonError = Math.Pow(realRating - pearsonRating,2);
-                    pearsonMAE += pearsonError;
+                    pearsonRMSE += pearsonError;
                 }
 
                 if (lMethods.Contains(PredictionMethod.Cosine))
@@ -580,7 +580,7 @@ namespace RecommenderSystem
                     if (cosineRating == -1)
                         continue;
                     double cosineError = Math.Pow(realRating - cosineRating,2);
-                    cosineMAE += cosineError;
+                    cosineRMSE += cosineError;
                 }
 
                 if (lMethods.Contains(PredictionMethod.Random))
@@ -589,17 +589,17 @@ namespace RecommenderSystem
                     if (randomRating == -1)
                         continue;
                     double randomError = Math.Pow(realRating - randomRating,2);
-                    randomMAE += randomError;
+                    randomRMSE += randomError;
                 }
 
                 iterationNumber++;
             }
             if (lMethods.Contains(PredictionMethod.Cosine))
-                ans.Add(PredictionMethod.Cosine, cosineMAE / cTrials);
+                ans.Add(PredictionMethod.Cosine, Math.Sqrt(cosineRMSE / cTrials));
             if (lMethods.Contains(PredictionMethod.Pearson))
-                ans.Add(PredictionMethod.Pearson, pearsonMAE / cTrials);
+                ans.Add(PredictionMethod.Pearson, Math.Sqrt(pearsonRMSE / cTrials));
             if (lMethods.Contains(PredictionMethod.Random))
-                ans.Add(PredictionMethod.Random, randomMAE / cTrials);
+                ans.Add(PredictionMethod.Random, Math.Sqrt(randomRMSE / cTrials));
             return ans;
         }
     }
