@@ -19,13 +19,10 @@ namespace RecommenderSystem
         private Dictionary<string,Dictionary<string,double>> raiDic_AllUsers; //KEY = USERID. VALUE = <MOVIE,VAL> SO THAT VALUE IS THE DIFFERENCE (RATING-AVARAGE)
         private Dictionary<string, double> currentAvarage;
 
-
         //E2 fields
         private Dictionary<string, Dictionary<string, double>> m_ratings_train; //rating belongs to the train set
         private Dictionary<string, Dictionary<string, double>> m_ratings_test;
         private int dataSetSize = 0;
-
-
 
         //constructor
         public RecommenderSystem()
@@ -77,12 +74,8 @@ namespace RecommenderSystem
                 {
                     using (StreamReader r = new StreamReader(fs, Encoding.UTF8))
                     {
-                        //parseRatings(r,dTrainSetSize);
                         parseRatings(r);
                         splitToTrainAndTest(dTrainSetSize);
-                        string s = "hi";
-
-
                         //calcAvgs();
                         //calcRAI();
                     }
@@ -144,8 +137,6 @@ namespace RecommenderSystem
 
         private void splitToTrainAndTest(double dTrainSetSize)
         {
-            //m_ratings_train = new Dictionary<string, Dictionary<string, double>>(m_ratings); //deep copy
-            
             HashSet<string> alreadyChosen = new HashSet<string>();
             int currentTestSize = 0;
             int dataSetSize = this.dataSetSize;
@@ -173,11 +164,7 @@ namespace RecommenderSystem
         {
             int numOfMovies = m_ratings_train[userID].Keys.Count;
             int testSize =  (int) (numOfMovies * precentOfMoviesToTest);
-
-
-            // int currentTestSize = 0;
             int currentTestSize = 0;
-            
             m_ratings_test.Add(userID, new Dictionary<string, double>());
             
             foreach(string movieID in m_ratings[userID].Keys)
@@ -192,9 +179,6 @@ namespace RecommenderSystem
             if (m_ratings_train[userID].Count == 0)
                 m_ratings_train.Remove(userID);
             return currentTestSize;
-            
-           
-
         }
 
         private void parseRatings(StreamReader sr) //not saving time stamp
@@ -243,8 +227,6 @@ namespace RecommenderSystem
                 }
                 line = sr.ReadLine();
             }
-
-
             sr.Close();
         }
 
@@ -588,7 +570,7 @@ namespace RecommenderSystem
                     double pearsonRating = PredictRating(PredictionMethod.Pearson, userID, movieID);
                     if (pearsonRating == -1) //invalid user or movie
                         continue;
-                    double pearsonError = Math.Abs(realRating - pearsonRating);
+                    double pearsonError = Math.Pow(realRating - pearsonRating,2);
                     pearsonMAE += pearsonError;
                 }
 
@@ -597,7 +579,7 @@ namespace RecommenderSystem
                     double cosineRating = PredictRating(PredictionMethod.Cosine, userID, movieID);
                     if (cosineRating == -1)
                         continue;
-                    double cosineError = Math.Abs(realRating - cosineRating);
+                    double cosineError = Math.Pow(realRating - cosineRating,2);
                     cosineMAE += cosineError;
                 }
 
@@ -606,7 +588,7 @@ namespace RecommenderSystem
                     double randomRating = PredictRating(PredictionMethod.Random, userID, movieID);
                     if (randomRating == -1)
                         continue;
-                    double randomError = Math.Abs(realRating - randomRating);
+                    double randomError = Math.Pow(realRating - randomRating,2);
                     randomMAE += randomError;
                 }
 
