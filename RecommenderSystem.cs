@@ -23,6 +23,7 @@ namespace RecommenderSystem
         //E2 fields
         private Dictionary<string, Dictionary<string, double>> m_ratings_train; //rating belongs to the train set
         private Dictionary<string, Dictionary<string, double>> m_ratings_test;
+        private int dataSetSize = 0;
 
 
 
@@ -76,7 +77,12 @@ namespace RecommenderSystem
                 {
                     using (StreamReader r = new StreamReader(fs, Encoding.UTF8))
                     {
-                        parseRatings(r,dTrainSetSize);
+                        //parseRatings(r,dTrainSetSize);
+                        parseRatings(r);
+                        splitToTrainAndTest(dTrainSetSize);
+                        string s = "hi";
+
+
                         //calcAvgs();
                         //calcRAI();
                     }
@@ -87,7 +93,7 @@ namespace RecommenderSystem
                 Console.WriteLine("Couldn't load file");
             }
         }
-
+        /*
         private void parseRatings(StreamReader sr, double dTrainSetSize)
         {
             string line = sr.ReadLine();
@@ -134,27 +140,60 @@ namespace RecommenderSystem
 
             }
         }
+        */
 
-        private void splitToTrainAndTest(string userID, double dTrainSetSize)
+        private void splitToTrainAndTest(double dTrainSetSize)
         {
-            int numOfMovies = m_ratings[userID].Keys.Count;
-            int trainSize =  (int) (numOfMovies * dTrainSetSize);
-            int testSize = numOfMovies - trainSize;
-            int currentTrainSize = 0;
-            //int currentTestSize = 0;
-            foreach (string movieID in m_ratings[userID].Keys)
+            //m_ratings_train = new Dictionary<string, Dictionary<string, double>>(m_ratings); //deep copy
+            
+            HashSet<string> alreadyChosen = new HashSet<string>();
+            int currentTestSize = 0;
+            int dataSetSize = this.dataSetSize;
+            Random r = new Random();
+            int testSize = (int)((1 - dTrainSetSize) * dataSetSize);
+           // float d = currentTestSize / dataSetSize;
+            while (currentTestSize<testSize)
             {
-                double rating = m_ratings[userID][movieID];
-                if (currentTrainSize < trainSize)
+                double currentNum_user = r.NextDouble();
+                int locationOfUser = (int) ((m_ratings_train.Keys.Count - 1) * currentNum_user);
+                if (locationOfUser < m_ratings_train.Keys.ToList().Count)
                 {
-                    m_ratings_train[userID].Add(movieID, rating);
-                    currentTrainSize++;
-                }
-                else //get the rest of the data for testing
-                {
-                    m_ratings_test[userID].Add(movieID, rating);
+                    string userID = m_ratings_train.Keys.ToList()[locationOfUser];
+                    if (!alreadyChosen.Contains(userID))
+                    {
+                        int k = splitUserToTrainAndTest(userID, r.NextDouble());
+                        currentTestSize += k;
+                        alreadyChosen.Add(userID);
+                    }
                 }
             }
+        }
+
+        private int splitUserToTrainAndTest(string userID, double precentOfMoviesToTest) //returns number of movies moved to test set
+        {
+            int numOfMovies = m_ratings_train[userID].Keys.Count;
+            int testSize =  (int) (numOfMovies * precentOfMoviesToTest);
+
+
+            // int currentTestSize = 0;
+            int currentTestSize = 0;
+            
+            m_ratings_test.Add(userID, new Dictionary<string, double>());
+            
+            foreach(string movieID in m_ratings[userID].Keys)
+            {
+                if (currentTestSize==testSize && (m_ratings_test.Count/dataSetSize)<0.05)
+                    break;
+                double rating = m_ratings[userID][movieID];
+                m_ratings_test[userID].Add(movieID, rating);
+                m_ratings_train[userID].Remove(movieID); 
+                currentTestSize++;
+            }
+            if (m_ratings_train[userID].Count == 0)
+                m_ratings_train.Remove(userID);
+            return currentTestSize;
+            
+           
 
         }
 
@@ -174,10 +213,13 @@ namespace RecommenderSystem
                     if (!m_ratings.ContainsKey(userId))
                     {
                         m_ratings.Add(userId, new Dictionary<string, double>());
+                        m_ratings_train.Add(userId, new Dictionary<string, double>());
                         m_userAvgs.Add(userId, 0); 
                     }
                     m_ratings[userId].Add(movieId, rating);
-                    m_userAvgs[userId] += rating; 
+                    m_ratings_train[userId].Add(movieId, rating);
+                    m_userAvgs[userId] += rating;
+                    dataSetSize++;
 
                     if (!cosineDenominator.ContainsKey(userId))
                     {
