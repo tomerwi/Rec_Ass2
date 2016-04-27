@@ -494,12 +494,22 @@ namespace RecommenderSystem
         }
 
         //new E2
-
         public void TrainBaseModel(int cFeatures)
         {
+            //divide the train to train and validation
+
+
+
             double mue = computeMue(); //compute the avarage rating of all the users in the training data
-            Random r = new Random();
+
+            //init bu bi pu qi with random small vals
+            Dictionary<string, double> buDic = new Dictionary<string, double>();
+            Dictionary<string, double> biDic = new Dictionary<string, double>();
+            Dictionary<string, double> puDic = new Dictionary<string, double>();
+            Dictionary<string, double> qiDic = new Dictionary<string, double>();
+
             
+
         }
 
         private double computeMue() 
