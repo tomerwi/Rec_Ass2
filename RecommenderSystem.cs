@@ -23,8 +23,8 @@ namespace RecommenderSystem
         private Dictionary<string, Dictionary<string, double>> m_ratings_train; //rating belongs to the train set
         private Dictionary<string, Dictionary<string, double>> m_ratings_test;
         
-        private Dictionary<string, Dictionary<string, double>> m_ratings_trainOfTrain;
-        private Dictionary<string, Dictionary<string, double>> m_ratings_validationOfTrain;
+       // private Dictionary<string, Dictionary<string, double>> m_ratings_trainOfTrain;
+        private Dictionary<string, Dictionary<string, double>> m_ratings_validation;
         private int dataSetSize = 0;
 
         //constructor
@@ -40,8 +40,8 @@ namespace RecommenderSystem
             //E2
             m_ratings_train = new Dictionary<string, Dictionary<string, double>>(); //<User <Movie,Rating>>
             m_ratings_test = new Dictionary<string, Dictionary<string, double>>(); //<User <Movie,Rating>>
-            m_ratings_trainOfTrain = new Dictionary<string, Dictionary<string, double>>();
-            m_ratings_validationOfTrain = new Dictionary<string, Dictionary<string, double>>();
+            //m_ratings_trainOfTrain = new Dictionary<string, Dictionary<string, double>>();
+            m_ratings_validation = new Dictionary<string, Dictionary<string, double>>();
         }
 
         //load a datatset 
@@ -92,25 +92,30 @@ namespace RecommenderSystem
             }
         }
 
-
         private void splitToTrainAndTest(double dTrainSetSize)
         {
             HashSet<string> alreadyChosen = new HashSet<string>();
             int currentTestSize = 0;
-            int dataSetSize = this.dataSetSize;
             Random r = new Random();
             int testSize = (int)((1 - dTrainSetSize) * dataSetSize);
-           // float d = currentTestSize / dataSetSize;
-            while (currentTestSize<testSize)
+            //int validationSize = testSize;
+            bool validation = false;
+            // float d = currentTestSize / dataSetSize;
+            while (currentTestSize < testSize || !validation)
             {
+                if (currentTestSize >= testSize)
+                {
+                    validation = true;
+                    currentTestSize = 0;
+                }
                 double currentNum_user = r.NextDouble();
-                int locationOfUser = (int) ((m_ratings_train.Keys.Count - 1) * currentNum_user);
+                int locationOfUser = (int)((m_ratings_train.Keys.Count - 1) * currentNum_user);
                 if (locationOfUser < m_ratings_train.Keys.ToList().Count)
                 {
                     string userID = m_ratings_train.Keys.ToList()[locationOfUser];
                     if (!alreadyChosen.Contains(userID))
                     {
-                        int k = splitUserToTrainAndTest(userID, r.NextDouble());
+                        int k = splitUserToTrainAndTest(userID, r.NextDouble(),validation);
                         currentTestSize += k;
                         alreadyChosen.Add(userID);
                     }
@@ -118,28 +123,80 @@ namespace RecommenderSystem
             }
         }
 
-        private int splitUserToTrainAndTest(string userID, double precentOfMoviesToTest) //returns number of movies moved to test set
+        private int splitUserToTrainAndTest(string userID, double precentOfMoviesToTest, bool validation) //returns number of movies moved to test set
         {
             int numOfMovies = m_ratings_train[userID].Keys.Count;
-            int testSize =  (int) (numOfMovies * precentOfMoviesToTest);
-            int currentTestSize = 0;
-            m_ratings_test.Add(userID, new Dictionary<string, double>());
-            
+            int k = (int)(numOfMovies * precentOfMoviesToTest);
+            int numOfAdded = 0;
+            if(!validation)
+                m_ratings_test.Add(userID, new Dictionary<string, double>());
+            else
+                m_ratings_validation.Add(userID, new Dictionary<string, double>());
 
             foreach (string movieID in m_ratings[userID].Keys)
             {
-                int precentOfTest = m_ratings_test.Count / dataSetSize; //1) always be zero because its int. 2) m_rating.count gives the number of users, not the number of Dataset!
-                if (currentTestSize==testSize || precentOfTest>0.05) 
+                //int precentOfTest = m_ratings_test.Count / dataSetSize; //1) always be zero because its int. 2) m_rating.count gives the number of users, not the number of Dataset!
+                if (numOfAdded == k /*precentOfTest > 0.05*/)
                     break;
                 double rating = m_ratings[userID][movieID];
-                m_ratings_test[userID].Add(movieID, rating);
-                m_ratings_train[userID].Remove(movieID); 
-                currentTestSize++;
+                if(!validation)
+                    m_ratings_test[userID].Add(movieID, rating);
+                else
+                    m_ratings_validation[userID].Add(movieID, rating);
+                m_ratings_train[userID].Remove(movieID);
+                numOfAdded++;
             }
             if (m_ratings_train[userID].Count == 0)
                 m_ratings_train.Remove(userID);
-            return currentTestSize;
+            return numOfAdded;
         }
+        /* private void splitToTrainAndTest(double dTrainSetSize)
+         {
+             HashSet<string> alreadyChosen = new HashSet<string>();
+             int currentTestSize = 0;
+             int dataSetSize = this.dataSetSize;
+             Random r = new Random();
+             int testSize = (int)((1 - dTrainSetSize) * dataSetSize);
+            // float d = currentTestSize / dataSetSize;
+             while (currentTestSize<testSize)
+             {
+                 double currentNum_user = r.NextDouble();
+                 int locationOfUser = (int) ((m_ratings_train.Keys.Count - 1) * currentNum_user);
+                 if (locationOfUser < m_ratings_train.Keys.ToList().Count)
+                 {
+                     string userID = m_ratings_train.Keys.ToList()[locationOfUser];
+                     if (!alreadyChosen.Contains(userID))
+                     {
+                         int k = splitUserToTrainAndTest(userID, r.NextDouble());
+                         currentTestSize += k;
+                         alreadyChosen.Add(userID);
+                     }
+                 }
+             }
+         }
+
+         private int splitUserToTrainAndTest(string userID, double precentOfMoviesToTest) //returns number of movies moved to test set
+         {
+             int numOfMovies = m_ratings_train[userID].Keys.Count;
+             int testSize =  (int) (numOfMovies * precentOfMoviesToTest);
+             int currentTestSize = 0;
+             m_ratings_test.Add(userID, new Dictionary<string, double>());
+
+
+             foreach (string movieID in m_ratings[userID].Keys)
+             {
+                 int precentOfTest = m_ratings_test.Count / dataSetSize; //1) always be zero because its int. 2) m_rating.count gives the number of users, not the number of Dataset!
+                 if (currentTestSize==testSize || precentOfTest>0.05) 
+                     break;
+                 double rating = m_ratings[userID][movieID];
+                 m_ratings_test[userID].Add(movieID, rating);
+                 m_ratings_train[userID].Remove(movieID); 
+                 currentTestSize++;
+             }
+             if (m_ratings_train[userID].Count == 0)
+                 m_ratings_train.Remove(userID);
+             return currentTestSize;
+         }*/
 
         private void parseRatings(StreamReader sr) //not saving time stamp
         {
@@ -456,9 +513,7 @@ namespace RecommenderSystem
         //new E2
         public void TrainBaseModel(int cFeatures)
         {
-            //divide the train to train and validation
-            
-
+            //divide the train to train and validation -happens at load
 
             double mue = computeMue(); //compute the avarage rating of all the users in the training data
 
@@ -469,7 +524,6 @@ namespace RecommenderSystem
             Dictionary<string, double> qiDic = new Dictionary<string, double>();
             double gamma = 0.05;
             double lamda = 0.05;
-
            
             double eTrain = 0;
             //double eValidation = Double.MaxValue; //the lowest validation error so far
@@ -479,11 +533,11 @@ namespace RecommenderSystem
             bool eValidationStillImproving = true;
             while (eValidationStillImproving) //while we are still improving
             {
-                foreach (string userID in m_ratings_trainOfTrain.Keys)
+                foreach (string userID in m_ratings_train.Keys)
                 {
-                    foreach (string movieID in m_ratings_trainOfTrain[userID].Keys)
+                    foreach (string movieID in m_ratings_train[userID].Keys)
                     {
-                        double rui = m_ratings_trainOfTrain[userID][movieID];
+                        double rui = m_ratings_train[userID][movieID];
                         double bi = biDic[userID];
                         double bu = buDic[userID];
                         double pu = 0.04; //where can we get this number?
@@ -503,11 +557,11 @@ namespace RecommenderSystem
                 //double currentE_validation = 0; //the current total error
                 double currentE_Squre = 0;
                 
-                foreach (string userID in m_ratings_validationOfTrain.Keys)
+                foreach (string userID in m_ratings_validation.Keys)
                 {
-                    foreach (string movieID in m_ratings_validationOfTrain[userID].Keys)
+                    foreach (string movieID in m_ratings_validation[userID].Keys)
                     {
-                        double rui = m_ratings_validationOfTrain[userID][movieID];
+                        double rui = m_ratings_validation[userID][movieID];
                         double bi = biDic[userID];
                         double bu = buDic[userID];
                         double pu = 0.04; //where can we get this number?
@@ -528,14 +582,7 @@ namespace RecommenderSystem
                     eValidationStillImproving = false;
                 else
                     bestRMSE = RMSE;
-
-
-
-
             }
-
-
-
 
         }
 
@@ -543,11 +590,11 @@ namespace RecommenderSystem
         {
             double totalRating  = 0;
             double numOfMovies = 0;
-            foreach(string user in m_ratings_trainOfTrain.Keys)
+            foreach(string user in m_ratings_train.Keys)
             {
-                foreach(string movie in m_ratings_trainOfTrain[user].Keys)
+                foreach(string movie in m_ratings_train[user].Keys)
                 {
-                    totalRating = totalRating + m_ratings_trainOfTrain[user][movie];
+                    totalRating = totalRating + m_ratings_train[user][movie];
                     numOfMovies++;
                 }
             }
