@@ -22,6 +22,9 @@ namespace RecommenderSystem
         //E2 fields
         private Dictionary<string, Dictionary<string, double>> m_ratings_train; //rating belongs to the train set
         private Dictionary<string, Dictionary<string, double>> m_ratings_test;
+        
+        private Dictionary<string, Dictionary<string, double>> m_ratings_trainOfTrain;
+        private Dictionary<string, Dictionary<string, double>> m_ratings_validationOfTrain;
         private int dataSetSize = 0;
 
         //constructor
@@ -37,6 +40,8 @@ namespace RecommenderSystem
             //E2
             m_ratings_train = new Dictionary<string, Dictionary<string, double>>(); //<User <Movie,Rating>>
             m_ratings_test = new Dictionary<string, Dictionary<string, double>>(); //<User <Movie,Rating>>
+            m_ratings_trainOfTrain = new Dictionary<string, Dictionary<string, double>>();
+            m_ratings_validationOfTrain = new Dictionary<string, Dictionary<string, double>>();
         }
 
         //load a datatset 
@@ -86,54 +91,7 @@ namespace RecommenderSystem
                 Console.WriteLine("Couldn't load file");
             }
         }
-        /*
-        private void parseRatings(StreamReader sr, double dTrainSetSize)
-        {
-            string line = sr.ReadLine();
-            char[] sep = new char[1];
-            sep[0] = ':';
-            string formerUserID = "";
 
-            while (line != null)
-            {
-                //char[] sep = new char[1];
-                //sep[0] = ':';
-                string[] l = line.Split(sep, StringSplitOptions.RemoveEmptyEntries);
-                if (l.Length == 4)
-                {
-                    string userId = l[0];
-                    string movieId = l[1];
-                    double rating = Double.Parse(l[2]);
-
-                    if (formerUserID=="") //assign the userID in the first line
-                        formerUserID = userId;
-
-
-                    if (!m_ratings_train.ContainsKey(userId)) //new user
-                    {
-                        //Split the rating of the former user 
-                        if (m_ratings.Keys.Count > 0)
-                        {
-                            splitToTrainAndTest(formerUserID, dTrainSetSize);
-                            formerUserID = userId;
-                        }
- 
-
-                        //Initiate Dictionaries
-                        m_ratings.Add(userId, new Dictionary<string, double>());
-                        m_ratings_test.Add(userId, new Dictionary<string, double>());
-                        m_ratings_train.Add(userId, new Dictionary<string, double>());
-                        //m_userAvgs.Add(userId, 0);
-                    }
-                    m_ratings[userId].Add(movieId, rating);
-                }
-                line = sr.ReadLine();
-                //Split to train and test
-
-
-            }
-        }
-        */
 
         private void splitToTrainAndTest(double dTrainSetSize)
         {
@@ -167,9 +125,11 @@ namespace RecommenderSystem
             int currentTestSize = 0;
             m_ratings_test.Add(userID, new Dictionary<string, double>());
             
-            foreach(string movieID in m_ratings[userID].Keys)
+
+            foreach (string movieID in m_ratings[userID].Keys)
             {
-                if (currentTestSize==testSize && (m_ratings_test.Count/dataSetSize)<0.05)
+                int precentOfTest = m_ratings_test.Count / dataSetSize; //1) always be zero because its int. 2) m_rating.count gives the number of users, not the number of Dataset!
+                if (currentTestSize==testSize || precentOfTest>0.05) 
                     break;
                 double rating = m_ratings[userID][movieID];
                 m_ratings_test[userID].Add(movieID, rating);
@@ -497,18 +457,85 @@ namespace RecommenderSystem
         public void TrainBaseModel(int cFeatures)
         {
             //divide the train to train and validation
-
+            
 
 
             double mue = computeMue(); //compute the avarage rating of all the users in the training data
 
             //init bu bi pu qi with random small vals
-            Dictionary<string, double> buDic = new Dictionary<string, double>();
+            Dictionary<string, double> buDic = new Dictionary<string, double>(); //string = userID, value = bu
             Dictionary<string, double> biDic = new Dictionary<string, double>();
-            Dictionary<string, double> puDic = new Dictionary<string, double>();
+            Dictionary<string, double> puDic = new Dictionary<string, double>(); //I think that each pu and qi is a vector of values
             Dictionary<string, double> qiDic = new Dictionary<string, double>();
+            double gamma = 0.05;
+            double lamda = 0.05;
 
-            
+           
+            double eTrain = 0;
+            //double eValidation = Double.MaxValue; //the lowest validation error so far
+
+            double bestRMSE = Double.MaxValue;
+             
+            bool eValidationStillImproving = true;
+            while (eValidationStillImproving) //while we are still improving
+            {
+                foreach (string userID in m_ratings_trainOfTrain.Keys)
+                {
+                    foreach (string movieID in m_ratings_trainOfTrain[userID].Keys)
+                    {
+                        double rui = m_ratings_trainOfTrain[userID][movieID];
+                        double bi = biDic[userID];
+                        double bu = buDic[userID];
+                        double pu = 0.04; //where can we get this number?
+                        double qi = 0.05; //where can we get this number?
+                        double eui = rui - mue - bi - bu - (pu * qi);
+                        eTrain += eui;
+
+                        //update parameters:
+                        buDic[userID] = bu + gamma * (eui - lamda * bu);
+                        biDic[userID] = bi + gamma * (eui - lamda * bi);
+                        puDic[userID] = pu + gamma * (eui - lamda * pu);
+                        qiDic[userID] = qi + gamma * (eui - lamda * qi);
+                    }
+                }
+                //compute validation error
+                double n = 0;
+                //double currentE_validation = 0; //the current total error
+                double currentE_Squre = 0;
+                
+                foreach (string userID in m_ratings_validationOfTrain.Keys)
+                {
+                    foreach (string movieID in m_ratings_validationOfTrain[userID].Keys)
+                    {
+                        double rui = m_ratings_validationOfTrain[userID][movieID];
+                        double bi = biDic[userID];
+                        double bu = buDic[userID];
+                        double pu = 0.04; //where can we get this number?
+                        double qi = 0.05; //where can we get this number?
+                        double eui = rui - mue - bi - bu - (pu * qi);
+                        //currentE_validation += eui;
+
+                        //for RMSE
+                        double euiSqure = Math.Pow(eui, 2);
+                        currentE_Squre = +euiSqure;
+                        n++;
+                    }
+                }
+
+                //For RMSE
+                double RMSE = Math.Sqrt(currentE_Squre/n);
+                if (RMSE > bestRMSE)//error wasnt imporved, then we dont do another iteration
+                    eValidationStillImproving = false;
+                else
+                    bestRMSE = RMSE;
+
+
+
+
+            }
+
+
+
 
         }
 
@@ -516,11 +543,11 @@ namespace RecommenderSystem
         {
             double totalRating  = 0;
             double numOfMovies = 0;
-            foreach(string user in m_ratings_train.Keys)
+            foreach(string user in m_ratings_trainOfTrain.Keys)
             {
-                foreach(string movie in m_ratings_train[user].Keys)
+                foreach(string movie in m_ratings_trainOfTrain[user].Keys)
                 {
-                    totalRating = totalRating + m_ratings_train[user][movie];
+                    totalRating = totalRating + m_ratings_trainOfTrain[user][movie];
                     numOfMovies++;
                 }
             }
