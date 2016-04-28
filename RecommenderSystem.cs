@@ -556,7 +556,38 @@ namespace RecommenderSystem
         }
         public void TrainStereotypes(int cStereotypes)
         {
-            throw new NotImplementedException();
+            //choosing random users as initial centorids
+            Dictionary<string, Dictionary<string, double>> centroids = new Dictionary<string, Dictionary<string, double>>();
+            Random r = new Random();
+            List<string> initalCentroids = new List<string>();
+            int numOfUsersInTrain = m_ratings_train.Keys.Count;
+            
+            for (int i=0;i<cStereotypes;i++)
+            {
+                double random = r.NextDouble();
+                int location = (int) (random * numOfUsersInTrain) -1;
+                string userID = m_ratings_train.Keys.ToList()[location];
+                if (!initalCentroids.Contains(userID))
+                {
+                    initalCentroids.Add(userID);
+                    centroids.Add(userID, m_ratings_train[userID]);
+                }
+                else
+                    i--; //try again
+            }
+
+            //Computing distance of users to centroids
+            Dictionary<string, string> usertoCentroid = new Dictionary<string, string>(); //key = userID. value = userID of the centroid
+            foreach(string userID in m_ratings_train.Keys)
+            {
+                foreach(string centroid in centroids.Keys)
+                {
+                    //Compute perason distance from user to each centroid and attach him to the closest one
+                }
+            }
+
+            
+
         }
 
         public Dictionary<double, int> GetRatingsHistogram(string sUID)
