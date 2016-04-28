@@ -529,23 +529,36 @@ namespace RecommenderSystem
 
             Dictionary<string, double> buDic = new Dictionary<string, double>(); //string = userID, value = bu
             Dictionary<string, double> biDic = new Dictionary<string, double>();
-            Dictionary<string, double> puDic = new Dictionary<string, double>(); 
-            Dictionary<string, double> qiDic = new Dictionary<string, double>();
-            // Dictionary<string, List<double>> puDic = new Dictionary<string, List<double>>(); //I think that each pu and qi is a vector of values
-            //  Dictionary<string, List<double>> qiDic = new Dictionary<string, List<double>>();
+            //Dictionary<string, double> puDic = new Dictionary<string, double>(); 
+            //Dictionary<string, double> qiDic = new Dictionary<string, double>();
+            Dictionary<string, List<double>> puDic = new Dictionary<string, List<double>>(); //I think that each pu and qi is a vector of values
+            Dictionary<string, List<double>> qiDic = new Dictionary<string, List<double>>();
+            
             //init bu bi pu qi with random small vals
-
+            //hilla
             foreach (string user in m_ratings.Keys)
             {
                 buDic.Add(user, getSmallRandomNumber());
-                // puDic.Add(user, new List<double>()); // what size should be each vector?!
-                puDic.Add(user, getSmallRandomNumber());
+                puDic.Add(user, new List<double>());
+                int counter = 0;
+                while (counter < cFeatures)
+                {
+                    puDic[user].Add(getSmallRandomNumber());
+                    counter++;
+                }
+                
             }
 
             foreach(string item in movieToUser.Keys)
             {
                 biDic.Add(item, getSmallRandomNumber());
-                qiDic.Add(item, getSmallRandomNumber());
+                qiDic.Add(item, new List<double>());
+                int counter = 0;
+                while (counter < cFeatures)
+                {
+                    qiDic[item].Add(getSmallRandomNumber());
+                    counter++;
+                }
             }
             double gamma = 0.05;
             double lamda = 0.05;
@@ -565,16 +578,24 @@ namespace RecommenderSystem
                         double rui = m_ratings_train[userID][movieID];
                         double bi = biDic[userID];
                         double bu = buDic[userID];
-                        double pu = 0.04; //where can we get this number?
-                        double qi = 0.05; //where can we get this number?
-                        double eui = rui - mue - bi - bu - (pu * qi);
+                        //double pu = 0.04; //where can we get this number?
+                        //double qi = 0.05; //where can we get this number?
+                        double puqi = 0;//hilla
+                        for(int i = 0; i < cFeatures; i++)//hilla
+                        {
+                            puqi += (puDic[userID][i] * qiDic[movieID][i]);
+                        }
+                        double eui = rui - mue - bi - bu - puqi;
                         eTrain += eui;
 
                         //update parameters:
                         buDic[userID] = bu + gamma * (eui - lamda * bu);
                         biDic[userID] = bi + gamma * (eui - lamda * bi);
-                        puDic[userID] = pu + gamma * (eui - lamda * pu);
-                        qiDic[userID] = qi + gamma * (eui - lamda * qi);
+                        for (int i = 0; i < cFeatures; i++)//hilla
+                        {
+                            puDic[userID][i] = puDic[userID][i] + gamma * (eui - lamda * puDic[userID][i]); 
+                            qiDic[userID][i] = qiDic[userID][i] + gamma * (eui - lamda * qiDic[userID][i]);
+                        }
                     }
                 }
                 //compute validation error
@@ -589,9 +610,14 @@ namespace RecommenderSystem
                         double rui = m_ratings_validation[userID][movieID];
                         double bi = biDic[userID];
                         double bu = buDic[userID];
-                        double pu = 0.04; //where can we get this number?
-                        double qi = 0.05; //where can we get this number?
-                        double eui = rui - mue - bi - bu - (pu * qi);
+                        // double pu = 0.04; //where can we get this number?
+                        //  double qi = 0.05; //where can we get this number?
+                        double puqi = 0;//hilla
+                        for (int i = 0; i < cFeatures; i++)//hilla
+                        {
+                            puqi += (puDic[userID][i] * qiDic[movieID][i]);
+                        }
+                        double eui = rui - mue - bi - bu - puqi;
                         //currentE_validation += eui;
 
                         //for RMSE
