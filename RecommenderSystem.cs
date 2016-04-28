@@ -510,6 +510,16 @@ namespace RecommenderSystem
             return ans;
         }
 
+        private double getSmallRandomNumber()
+        {
+            Random random = new Random();
+            bool negative = random.NextDouble() > 0.5;
+            double r = random.NextDouble();
+            if (negative)
+                return (-1 * r);
+            else
+                return r;
+        }
         //new E2
         public void TrainBaseModel(int cFeatures)
         {
@@ -517,11 +527,26 @@ namespace RecommenderSystem
 
             double mue = computeMue(); //compute the avarage rating of all the users in the training data
 
-            //init bu bi pu qi with random small vals
             Dictionary<string, double> buDic = new Dictionary<string, double>(); //string = userID, value = bu
             Dictionary<string, double> biDic = new Dictionary<string, double>();
-            Dictionary<string, double> puDic = new Dictionary<string, double>(); //I think that each pu and qi is a vector of values
+            Dictionary<string, double> puDic = new Dictionary<string, double>(); 
             Dictionary<string, double> qiDic = new Dictionary<string, double>();
+            // Dictionary<string, List<double>> puDic = new Dictionary<string, List<double>>(); //I think that each pu and qi is a vector of values
+            //  Dictionary<string, List<double>> qiDic = new Dictionary<string, List<double>>();
+            //init bu bi pu qi with random small vals
+
+            foreach (string user in m_ratings.Keys)
+            {
+                buDic.Add(user, getSmallRandomNumber());
+                // puDic.Add(user, new List<double>()); // what size should be each vector?!
+                puDic.Add(user, getSmallRandomNumber());
+            }
+
+            foreach(string item in movieToUser.Keys)
+            {
+                biDic.Add(item, getSmallRandomNumber());
+                qiDic.Add(item, getSmallRandomNumber());
+            }
             double gamma = 0.05;
             double lamda = 0.05;
            
