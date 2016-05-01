@@ -22,9 +22,9 @@ namespace RecommenderSystem
         //E2 fields
         private Dictionary<string, Dictionary<string, double>> m_ratings_train; //rating belongs to the train set
         private Dictionary<string, Dictionary<string, double>> m_ratings_test;
-        
        // private Dictionary<string, Dictionary<string, double>> m_ratings_trainOfTrain;
         private Dictionary<string, Dictionary<string, double>> m_ratings_validation;
+        private Dictionary<string, Dictionary<string, double>> m_centroids;
         private int dataSetSize = 0;
 
         //constructor
@@ -42,6 +42,8 @@ namespace RecommenderSystem
             m_ratings_test = new Dictionary<string, Dictionary<string, double>>(); //<User <Movie,Rating>>
             //m_ratings_trainOfTrain = new Dictionary<string, Dictionary<string, double>>();
             m_ratings_validation = new Dictionary<string, Dictionary<string, double>>();
+            m_centroids = new Dictionary<string, Dictionary<string, double>>();
+
         }
 
         //load a datatset 
@@ -652,12 +654,36 @@ namespace RecommenderSystem
 
             return totalRating/numOfMovies;
         }
+        private double calcUserCentroidPearson(string aID, string centroidID, double centroidAvg)
+        {
+            double numerator = 0;
+            double denominatorLeft = 0;
+            double denominatorRight = 0;
+            foreach (string itemID in m_centroids[centroidID].Keys)
+            {
+                if (!raiDic_AllUsers[aID].ContainsKey(itemID)) //only movies that they both rated and not take into account the movie that we want to predict
+                    continue;
+                double ruval = m_centroids[centroidID][itemID] - centroidAvg;
+                double raval = raiDic_AllUsers[aID][itemID];
+                numerator += (raval * ruval);
+                denominatorLeft += Math.Pow(ruval, 2);
+                denominatorRight += Math.Pow(raval, 2);
+            }
+            double denominator = (Math.Sqrt(denominatorLeft)) * (Math.Sqrt(denominatorRight));
+            if (denominator == 0) //throw exception?
+                return 0; //check this
+            return numerator / denominator;
+        }
         public void TrainStereotypes(int cStereotypes)
         {
             //choosing random users as initial centorids
-            Dictionary<string, Dictionary<string, double>> centroids = new Dictionary<string, Dictionary<string, double>>();
+            if (this.m_centroids.Count > 0)
+                m_centroids.Clear();
+           //  Dictionary<string, Dictionary<string, double>> centroids = new Dictionary<string, Dictionary<string, double>>(); //I think it should be a field
+            Dictionary<string, Dictionary<string, List<double>>> centroidsTemp = new Dictionary<string, Dictionary<string, List<double>>>();
+            Dictionary<string, double> centroidAvg = new Dictionary<string, double>();
             Random r = new Random();
-            List<string> initalCentroids = new List<string>();
+            //List<string> initalCentroids = new List<string>();
             int numOfUsersInTrain = m_ratings_train.Keys.Count;
             
             for (int i=0;i<cStereotypes;i++)
@@ -665,26 +691,73 @@ namespace RecommenderSystem
                 double random = r.NextDouble();
                 int location = (int) (random * numOfUsersInTrain) -1;
                 string userID = m_ratings_train.Keys.ToList()[location];
-                if (!initalCentroids.Contains(userID))
+                if (!m_centroids.ContainsKey(userID))
                 {
-                    initalCentroids.Add(userID);
-                    centroids.Add(userID, m_ratings_train[userID]);
+                    //initalCentroids.Add(userID);
+                    m_centroids.Add(userID, new Dictionary<string, double>());
+                    //m_centroids.Add(userID, m_ratings_train[userID]); //note that here we're creating another pointer to the user's items in train (and not copying)
+                    centroidAvg.Add(userID, m_userAvgs[userID]);
+                    centroidsTemp.Add(userID, new Dictionary<string, List<double>>());
+                    foreach(string itemID in m_ratings_train[userID].Keys)
+                    {
+                        m_centroids[userID].Add(itemID, m_ratings_train[userID][itemID]);
+                        centroidsTemp[userID].Add(itemID, new List<double>());
+                        centroidsTemp[userID][itemID].Add(m_ratings_train[userID][itemID]);
+                    }
                 }
                 else
                     i--; //try again
             }
 
             //Computing distance of users to centroids
-            Dictionary<string, string> usertoCentroid = new Dictionary<string, string>(); //key = userID. value = userID of the centroid
+           // Dictionary<string, string> usertoCentroid = new Dictionary<string, string>(); //key = userID. value = userID of the centroid
             foreach(string userID in m_ratings_train.Keys)
             {
-                foreach(string centroid in centroids.Keys)
+                if (m_centroids.ContainsKey(userID))
+                    continue;
+                double minDis = 0;
+                string bestCentroid = null;
+                foreach (string centroid in m_centroids.Keys)
                 {
                     //Compute perason distance from user to each centroid and attach him to the closest one
+
+                    double dis = calcUserCentroidPearson(userID, centroid, centroidAvg[centroid]);
+                    if (bestCentroid == null || minDis > dis)
+                    {
+                        minDis = dis;
+                        bestCentroid = centroid;
+                    }
+                }
+                if (bestCentroid != null)
+                {
+                   // usertoCentroid.Add(userID, bestCentroid);
+                    foreach(string itemID in m_ratings_train[userID].Keys)
+                    {
+                        if (!centroidsTemp[bestCentroid].ContainsKey(itemID))
+                            centroidsTemp[bestCentroid].Add(itemID, new List<double>());
+                        centroidsTemp[bestCentroid][itemID].Add(m_ratings_train[userID][itemID]);
+                    }
+                   
                 }
             }
 
-            
+            //calc the avg of the cent
+            foreach(string centroid in centroidsTemp.Keys)
+            {
+                double centSum = centroidAvg[centroid];//!!!
+                int centCount = 1; 
+                foreach(string item in centroidsTemp[centroid].Keys)
+                {
+                    double centItemSum = centroidsTemp[centroid][item].Sum();
+                    int centItemCount = centroidsTemp[centroid][item].Count;
+                    centCount += centItemCount;
+                    centSum += centItemSum;
+                    m_centroids[centroid][item]= (centItemSum / centItemCount);
+                }
+                centroidAvg[centroid] = (centSum / centCount);
+            }
+
+            //calc pearson between cents
 
         }
 
