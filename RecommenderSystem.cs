@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Diagnostics;
 
 namespace RecommenderSystem
 {
@@ -677,6 +678,9 @@ namespace RecommenderSystem
         public void TrainStereotypes(int cStereotypes)
         {
             //choosing random users as initial centorids
+            Stopwatch stopwatch = new Stopwatch();
+            TimeSpan timeout = new TimeSpan(0, 1, 0);
+            stopwatch.Start();
             if (this.m_centroids.Count > 0)
                 m_centroids.Clear();
            //  Dictionary<string, Dictionary<string, double>> centroids = new Dictionary<string, Dictionary<string, double>>(); //I think it should be a field
@@ -802,6 +806,10 @@ namespace RecommenderSystem
                 }
 
                 if (centGood)// we can stop
+                {
+                    toContinue = false;
+                }
+                else if(stopwatch.Elapsed>timeout)
                 {
                     toContinue = false;
                 }
