@@ -709,55 +709,103 @@ namespace RecommenderSystem
                     i--; //try again
             }
 
-            //Computing distance of users to centroids
-           // Dictionary<string, string> usertoCentroid = new Dictionary<string, string>(); //key = userID. value = userID of the centroid
-            foreach(string userID in m_ratings_train.Keys)
+            bool toContinue = true;
+            while (toContinue)
             {
-                if (m_centroids.ContainsKey(userID))
-                    continue;
-                double minDis = 0;
-                string bestCentroid = null;
-                foreach (string centroid in m_centroids.Keys)
+                //Computing distance of users to centroids
+                // Dictionary<string, string> usertoCentroid = new Dictionary<string, string>(); //key = userID. value = userID of the centroid
+                foreach (string userID in m_ratings_train.Keys)
                 {
-                    //Compute perason distance from user to each centroid and attach him to the closest one
-
-                    double dis = calcUserCentroidPearson(userID, centroid, centroidAvg[centroid]);
-                    if (bestCentroid == null || minDis > dis)
+                    if (m_centroids.ContainsKey(userID))
+                        continue;
+                    double minDis = 0;
+                    string bestCentroid = null;
+                    foreach (string centroid in m_centroids.Keys)
                     {
-                        minDis = dis;
-                        bestCentroid = centroid;
+                        //Compute perason distance from user to each centroid and attach him to the closest one
+
+                        double dis = calcUserCentroidPearson(userID, centroid, centroidAvg[centroid]);
+                        if (bestCentroid == null || minDis > dis)
+                        {
+                            minDis = dis;
+                            bestCentroid = centroid;
+                        }
+                    }
+                    if (bestCentroid != null)
+                    {
+                        // usertoCentroid.Add(userID, bestCentroid);
+                        foreach (string itemID in m_ratings_train[userID].Keys)
+                        {
+                            if (!centroidsTemp[bestCentroid].ContainsKey(itemID))
+                                centroidsTemp[bestCentroid].Add(itemID, new List<double>());
+                            centroidsTemp[bestCentroid][itemID].Add(m_ratings_train[userID][itemID]);
+                        }
+
                     }
                 }
-                if (bestCentroid != null)
+                bool centGood = true;
+                //calc the avg of the cent
+                foreach (string centroid in centroidsTemp.Keys)
                 {
-                   // usertoCentroid.Add(userID, bestCentroid);
-                    foreach(string itemID in m_ratings_train[userID].Keys)
+                    //double centSum = centroidAvg[centroid];//!!!
+                    //int centCount = 1; 
+                    double centSum = 0;
+                    int centCount = 0;
+                    double centOldAvg = centroidAvg[centroid];
+
+                    foreach (string item in centroidsTemp[centroid].Keys)
                     {
-                        if (!centroidsTemp[bestCentroid].ContainsKey(itemID))
-                            centroidsTemp[bestCentroid].Add(itemID, new List<double>());
-                        centroidsTemp[bestCentroid][itemID].Add(m_ratings_train[userID][itemID]);
+                        double centItemSum = centroidsTemp[centroid][item].Sum();
+                        int centItemCount = centroidsTemp[centroid][item].Count;
+                        centCount += centItemCount;
+                        centSum += centItemSum;
                     }
-                   
-                }
-            }
+                    double centNewAvg = (centSum / centCount);
+                    centroidAvg[centroid] = centNewAvg;
+                    double numeratorPearson = 0;
+                    double denominatorLeftPearson = 0;
+                    double denominatorRightPearson = 0;
+                    foreach (string item in centroidsTemp[centroid].Keys)
+                    {
+                        double centItemSum = centroidsTemp[centroid][item].Sum();
+                        int centItemCount = centroidsTemp[centroid][item].Count;
+                        double newri = (centItemSum / centItemCount);
+                        if (!m_centroids[centroid].ContainsKey(item))
+                            m_centroids[centroid].Add(item, newri);
+                        else
+                        {
+                            //calc pearson between cents
+                            if (centGood)
+                            {
+                                double oldrval = m_centroids[centroid][item] - centOldAvg;
+                                double newrval = newri - centNewAvg;
+                                numeratorPearson += (oldrval * newrval);
+                                denominatorLeftPearson += Math.Pow(oldrval, 2);
+                                denominatorRightPearson += Math.Pow(newrval, 2);
+                            }
+                            m_centroids[centroid][item] = newri;
+                        }
+                    }
+                    if (centGood)
+                    {
+                        double denominatorPearson = (Math.Sqrt(denominatorLeftPearson)) * (Math.Sqrt(denominatorRightPearson));
+                        if (denominatorPearson == 0)
+                            centGood = false;
+                        else
+                        {
+                            double pearsonVal = numeratorPearson / denominatorPearson;
+                            if (pearsonVal < 0.99) //check vals!
+                                centGood = false;
+                        }
+                    }
 
-            //calc the avg of the cent
-            foreach(string centroid in centroidsTemp.Keys)
-            {
-                double centSum = centroidAvg[centroid];//!!!
-                int centCount = 1; 
-                foreach(string item in centroidsTemp[centroid].Keys)
+                }
+
+                if (centGood)// we can stop
                 {
-                    double centItemSum = centroidsTemp[centroid][item].Sum();
-                    int centItemCount = centroidsTemp[centroid][item].Count;
-                    centCount += centItemCount;
-                    centSum += centItemSum;
-                    m_centroids[centroid][item]= (centItemSum / centItemCount);
+                    toContinue = false;
                 }
-                centroidAvg[centroid] = (centSum / centCount);
-            }
-
-            //calc pearson between cents
+            }         
 
         }
 
