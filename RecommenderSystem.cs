@@ -28,10 +28,10 @@ namespace RecommenderSystem
         private Dictionary<string, Dictionary<string, double>> m_centroids;
         private Dictionary<string, double> m_centroidAvg;
         //private Dictionary<string, Dictionary<string, double>> m_rui_base_model;
-        private Dictionary<string, double> buDic;
-        private Dictionary<string, double> biDic;
-        private Dictionary<string, List<double>> puDic;
-        private Dictionary<string, List<double>> qiDic;
+        private Dictionary<string, double> buDic = new Dictionary<string, double>();
+        private Dictionary<string, double> biDic = new Dictionary<string, double>();
+        private Dictionary<string, List<double>> puDic = new Dictionary<string, List<double>>();
+        private Dictionary<string, List<double>> qiDic = new Dictionary<string, List<double>>();
         private double mue;
         private int dataSetSize = 0;
 
