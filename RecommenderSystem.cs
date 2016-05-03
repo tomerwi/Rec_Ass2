@@ -376,11 +376,37 @@ namespace RecommenderSystem
                     return maxRating;
                 return ans; //should be Ra + num/dem
             }
+            if (m == PredictionMethod.BaseModel)
+            {
+                TrainBaseModel(10); //we need to save bu bi qu pi as fields in order to get the rating
+                return predictRatingBaseModel(sUID, sIID);
+
+            }
+            if (m == PredictionMethod.Stereotypes)
+            {
+                TrainStereotypes(10);
+                return predictRatingStereoType(sUID, sIID);
+                
+
+            }
             else//else random
             {
                 return randomPredictRating(sUID,sIID);
             }
+
+
         }   
+        
+        private double predictRatingStereoType(string userId, string itemId)
+        {
+            //Find the closest centroid
+            return 1;
+        }
+
+        private double predictRatingBaseModel(string userId, string itemId)
+        {
+            return 1;
+        }
 
         private double randomPredictRating(string sUID, string sIID)//check this!
         {
@@ -532,8 +558,7 @@ namespace RecommenderSystem
 
             Dictionary<string, double> buDic = new Dictionary<string, double>(); //string = userID, value = bu
             Dictionary<string, double> biDic = new Dictionary<string, double>();
-            //Dictionary<string, double> puDic = new Dictionary<string, double>(); 
-            //Dictionary<string, double> qiDic = new Dictionary<string, double>();
+
             Dictionary<string, List<double>> puDic = new Dictionary<string, List<double>>(); //I think that each pu and qi is a vector of values
             Dictionary<string, List<double>> qiDic = new Dictionary<string, List<double>>();
             
@@ -567,7 +592,7 @@ namespace RecommenderSystem
             double lamda = 0.05;
            
             double eTrain = 0;
-            //double eValidation = Double.MaxValue; //the lowest validation error so far
+           
 
             double bestRMSE = Double.MaxValue;
              
@@ -704,7 +729,7 @@ namespace RecommenderSystem
                     centroidsTemp.Add(userID, new Dictionary<string, List<double>>());
                     foreach(string itemID in m_ratings_train[userID].Keys)
                     {
-                        m_centroids[userID].Add(itemID, m_ratings_train[userID][itemID]);
+                        m_centroids[userID].Add(itemID, m_ratings_train[userID][itemID]); //add the rating to the centroid
                         centroidsTemp[userID].Add(itemID, new List<double>());
                         centroidsTemp[userID][itemID].Add(m_ratings_train[userID][itemID]);
                     }
@@ -729,13 +754,13 @@ namespace RecommenderSystem
                         //Compute perason distance from user to each centroid and attach him to the closest one
 
                         double dis = calcUserCentroidPearson(userID, centroid, centroidAvg[centroid]);
-                        if (bestCentroid == null || minDis > dis)
+                        if (bestCentroid == null || minDis > dis) //if we are in the first iteration or we found a closer centroid
                         {
                             minDis = dis;
                             bestCentroid = centroid;
                         }
                     }
-                    if (bestCentroid != null)
+                    if (bestCentroid != null) //we need to do it after all the users were iterated??
                     {
                         // usertoCentroid.Add(userID, bestCentroid);
                         foreach (string itemID in m_ratings_train[userID].Keys)
