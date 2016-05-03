@@ -28,10 +28,10 @@ namespace RecommenderSystem
         private Dictionary<string, Dictionary<string, double>> m_centroids;
         private Dictionary<string, double> m_centroidAvg;
         //private Dictionary<string, Dictionary<string, double>> m_rui_base_model;
-        private Dictionary<string, double> buDic = new Dictionary<string, double>();
-        private Dictionary<string, double> biDic = new Dictionary<string, double>();
-        private Dictionary<string, List<double>> puDic = new Dictionary<string, List<double>>();
-        private Dictionary<string, List<double>> qiDic = new Dictionary<string, List<double>>();
+        private Dictionary<string, double> buDic;
+        private Dictionary<string, double> biDic;
+        private Dictionary<string, List<double>> puDic;
+        private Dictionary<string, List<double>> qiDic;
         private double mue;
         private int dataSetSize = 0;
 
@@ -438,15 +438,25 @@ namespace RecommenderSystem
 
         private double predictRatingBaseModel(string userId, string itemId)
         {
-            //check if user exists 
-            double bi = biDic[userId];
-            double bu = buDic[userId];
+            double bi = 0;
+            if(biDic.ContainsKey(userId))
+                bi = biDic[userId];
+
+            double bu = 0;
+            if(buDic.ContainsKey(userId))
+                bu = buDic[userId];
             double puqi = 0;//hilla
-            for (int i = 0; i < puDic[userId].Count && i< qiDic[userId].Count; i++)//hilla
+            if(puDic.ContainsKey(userId) && qiDic.ContainsKey(userId))
             {
-                puqi += (puDic[userId][i] * qiDic[userId][i]);
+                for (int i = 0; i < puDic[userId].Count && i< qiDic[userId].Count; i++)//hilla
+                {
+                    puqi += (puDic[userId][i] * qiDic[userId][i]);
+                }
             }
-            return mue + bi + bu + puqi;
+            double rui = mue + bi + bu + puqi;
+            if (rui == 0)
+                return m_userAvgs[userId];
+            return rui;
         }
 
         private double randomPredictRating(string sUID, string sIID)//check this!
