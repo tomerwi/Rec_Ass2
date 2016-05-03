@@ -45,9 +45,10 @@ namespace RecommenderSystem
         {
             RecommenderSystem rs = new RecommenderSystem();
             rs.Load("C:\\Users\\Tomer\\Documents\\GitHub\\Rec_Ass2\\ratings.dat", 0.95);
-            /*
+            
+            
             rs.TrainBaseModel(10);
-            rs.TrainStereotypes(10);
+            //rs.TrainStereotypes(10);
             List<RecommenderSystem.PredictionMethod> lMethods = new List<RecommenderSystem.PredictionMethod>();
             lMethods.Add(RecommenderSystem.PredictionMethod.BaseModel);
             lMethods.Add(RecommenderSystem.PredictionMethod.Stereotypes);
@@ -55,14 +56,14 @@ namespace RecommenderSystem
             lMethods.Add(RecommenderSystem.PredictionMethod.Cosine);
             lMethods.Add(RecommenderSystem.PredictionMethod.Random);
             DateTime dtStart = DateTime.Now;
-            Dictionary<RecommenderSystem.PredictionMethod, double> dResults = rs.ComputeRMSE(lMethods); 
+            Dictionary<RecommenderSystem.PredictionMethod, double> dResults = rs.ComputeRMSE(lMethods,10); 
             Console.WriteLine("Hit ratio scores for Pearson, Cosine, BaseModel, Stereotypes, and Random are:");
             foreach (KeyValuePair<RecommenderSystem.PredictionMethod, double> p in dResults)
                 Console.Write(p.Key + "=" + Math.Round(p.Value, 4) + ", ");
             Console.WriteLine();
             Console.WriteLine("Execution time was " + Math.Round((DateTime.Now - dtStart).TotalSeconds, 0));
             Console.ReadLine();
-            */
+            
         }
 
 
