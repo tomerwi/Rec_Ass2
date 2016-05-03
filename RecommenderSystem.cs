@@ -27,7 +27,11 @@ namespace RecommenderSystem
         private Dictionary<string, Dictionary<string, double>> m_ratings_validation;
         private Dictionary<string, Dictionary<string, double>> m_centroids;
         private Dictionary<string, double> m_centroidAvg;
-        private Dictionary<string, Dictionary<string, double>> m_rui_base_model;
+        //private Dictionary<string, Dictionary<string, double>> m_rui_base_model;
+        private Dictionary<string, double> buDic;
+        private Dictionary<string, double> biDic;
+        private Dictionary<string, List<double>> puDic;
+        private Dictionary<string, List<double>> qiDic;
         private double mue;
         private int dataSetSize = 0;
 
@@ -48,7 +52,12 @@ namespace RecommenderSystem
             m_ratings_validation = new Dictionary<string, Dictionary<string, double>>();
             m_centroids = new Dictionary<string, Dictionary<string, double>>();
             m_centroidAvg = new Dictionary<string, double>();
-            m_rui_base_model = new Dictionary<string, Dictionary<string, double>>();
+            //m_rui_base_model = new Dictionary<string, Dictionary<string, double>>();
+            buDic = new Dictionary<string, double>(); //string = userID, value = bu
+            biDic = new Dictionary<string, double>();
+
+            puDic = new Dictionary<string, List<double>>(); //I think that each pu and qi is a vector of values
+            qiDic = new Dictionary<string, List<double>>();
         }
 
         //load a datatset 
@@ -429,8 +438,15 @@ namespace RecommenderSystem
 
         private double predictRatingBaseModel(string userId, string itemId)
         {
-            //how?!?
-            return 1;
+            //check if user exists 
+            double bi = biDic[userId];
+            double bu = buDic[userId];
+            double puqi = 0;//hilla
+            for (int i = 0; i < puDic[userId].Count && i< qiDic[userId].Count; i++)//hilla
+            {
+                puqi += (puDic[userId][i] * qiDic[userId][i]);
+            }
+            return mue + bi + bu + puqi;
         }
 
         private double randomPredictRating(string sUID, string sIID)//check this!
@@ -580,14 +596,14 @@ namespace RecommenderSystem
             //divide the train to train and validation -happens at load
 
             //double mue = computeMue(); //compute the avarage rating of all the users in the training data
-            if (m_rui_base_model.Count > 0)
-                m_rui_base_model.Clear();
-            Dictionary<string, double> buDic = new Dictionary<string, double>(); //string = userID, value = bu
-            Dictionary<string, double> biDic = new Dictionary<string, double>();
+            /*if (m_rui_base_model.Count > 0)
+                m_rui_base_model.Clear();*/
+            buDic = new Dictionary<string, double>(); //string = userID, value = bu
+            biDic = new Dictionary<string, double>();
 
-            Dictionary<string, List<double>> puDic = new Dictionary<string, List<double>>(); //I think that each pu and qi is a vector of values
-            Dictionary<string, List<double>> qiDic = new Dictionary<string, List<double>>();
-            foreach(string user in m_ratings_train.Keys)
+            puDic = new Dictionary<string, List<double>>(); //I think that each pu and qi is a vector of values
+            qiDic = new Dictionary<string, List<double>>();
+            /*foreach(string user in m_ratings_train.Keys)
             {
                 if (!m_rui_base_model.ContainsKey(user))
                     m_rui_base_model.Add(user, new Dictionary<string, double>());
@@ -596,7 +612,7 @@ namespace RecommenderSystem
                     if (!m_rui_base_model[user].ContainsKey(item))
                         m_rui_base_model[user].Add(item, m_rui_base_model[user][item]);
                 }
-            }
+            }*/
             //init bu bi pu qi with random small vals
             //hilla
             foreach (string user in m_ratings.Keys)
