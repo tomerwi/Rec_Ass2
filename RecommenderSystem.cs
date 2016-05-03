@@ -439,18 +439,18 @@ namespace RecommenderSystem
         private double predictRatingBaseModel(string userId, string itemId)
         {
             double bi = 0;
-            if(biDic.ContainsKey(userId))
-                bi = biDic[userId];
+            if(biDic.ContainsKey(itemId))
+                bi = biDic[itemId];
 
             double bu = 0;
             if(buDic.ContainsKey(userId))
                 bu = buDic[userId];
             double puqi = 0;//hilla
-            if(puDic.ContainsKey(userId) && qiDic.ContainsKey(userId))
+            if(puDic.ContainsKey(userId) && qiDic.ContainsKey(itemId))
             {
-                for (int i = 0; i < puDic[userId].Count && i< qiDic[userId].Count; i++)//hilla
+                for (int i = 0; i < puDic[userId].Count && i< qiDic[itemId].Count; i++)//hilla
                 {
-                    puqi += (puDic[userId][i] * qiDic[userId][i]);
+                    puqi += (puDic[userId][i] * qiDic[itemId][i]);
                 }
             }
             double rui = mue + bi + bu + puqi;
@@ -665,7 +665,7 @@ namespace RecommenderSystem
                     foreach (string movieID in m_ratings_train[userID].Keys)
                     {
                         double rui = m_ratings_train[userID][movieID];
-                        double bi = biDic[userID];
+                        double bi = biDic[movieID];
                         double bu = buDic[userID];
                         //double pu = 0.04; //where can we get this number?
                         //double qi = 0.05; //where can we get this number?
@@ -679,11 +679,11 @@ namespace RecommenderSystem
 
                         //update parameters:
                         buDic[userID] = bu + gamma * (eui - lamda * bu);
-                        biDic[userID] = bi + gamma * (eui - lamda * bi);
+                        biDic[movieID] = bi + gamma * (eui - lamda * bi);
                         for (int i = 0; i < cFeatures; i++)//hilla
                         {
                             puDic[userID][i] = puDic[userID][i] + gamma * (eui - lamda * puDic[userID][i]); 
-                            qiDic[userID][i] = qiDic[userID][i] + gamma * (eui - lamda * qiDic[userID][i]);
+                            qiDic[movieID][i] = qiDic[movieID][i] + gamma * (eui - lamda * qiDic[movieID][i]);
                         }
                     }
                 }
@@ -697,7 +697,7 @@ namespace RecommenderSystem
                     foreach (string movieID in m_ratings_validation[userID].Keys)
                     {
                         double rui = m_ratings_validation[userID][movieID];
-                        double bi = biDic[userID];
+                        double bi = biDic[movieID];
                         double bu = buDic[userID];
                         // double pu = 0.04; //where can we get this number?
                         //  double qi = 0.05; //where can we get this number?
