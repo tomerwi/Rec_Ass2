@@ -98,8 +98,8 @@ namespace RecommenderSystem
                         parseRatings(r);
                         splitToTrainAndTest(dTrainSetSize);
                         mue = computeMue();
-                        //calcAvgs();
-                        //calcRAI();
+                        calcAvgs();
+                        calcRAI();
                     }
                 }
             }
@@ -649,10 +649,10 @@ namespace RecommenderSystem
                     counter++;
                 }
             }
-            double gamma = 0.05;
+            double gamma = 0.01;
             double lamda = 0.05;
            
-            double eTrain = 0;
+           // double eTrain = 0;
            
 
             double bestRMSE = Double.MaxValue;
@@ -675,15 +675,15 @@ namespace RecommenderSystem
                             puqi += (puDic[userID][i] * qiDic[movieID][i]);
                         }
                         double eui = rui - mue - bi - bu - puqi;
-                        eTrain += eui;
+                        //eTrain += eui;
 
                         //update parameters:
-                        buDic[userID] = bu + gamma * (eui - lamda * bu);
-                        biDic[movieID] = bi + gamma * (eui - lamda * bi);
+                        buDic[userID] = bu + (gamma * (eui - (lamda * bu)));
+                        biDic[movieID] = bi + (gamma * (eui - (lamda * bi)));
                         for (int i = 0; i < cFeatures; i++)//hilla
                         {
-                            puDic[userID][i] = puDic[userID][i] + gamma * (eui - lamda * puDic[userID][i]); 
-                            qiDic[movieID][i] = qiDic[movieID][i] + gamma * (eui - lamda * qiDic[movieID][i]);
+                            puDic[userID][i] = puDic[userID][i] + (gamma * ((eui* qiDic[movieID][i]) - (lamda * puDic[userID][i]))); 
+                            qiDic[movieID][i] = qiDic[movieID][i] + (gamma * ((eui* puDic[userID][i]) - (lamda * qiDic[movieID][i])));
                         }
                     }
                 }
@@ -766,7 +766,7 @@ namespace RecommenderSystem
         {
             //choosing random users as initial centorids
             Stopwatch stopwatch = new Stopwatch();
-            TimeSpan timeout = new TimeSpan(0, 1, 0);
+            TimeSpan timeout = new TimeSpan(0, 5, 0);
             stopwatch.Start();
             if (m_centroids.Count > 0)
                 m_centroids.Clear();
@@ -892,7 +892,18 @@ namespace RecommenderSystem
                     }
 
                 }
+                //!!
+                centroidsTemp.Clear();
+                foreach (string cent in m_centroids.Keys)
+                {
+                    centroidsTemp.Add(cent, new Dictionary<string, List<double>>());
+                    foreach(string itemID in m_centroids[cent].Keys)
+                    {
+                        centroidsTemp[cent].Add(itemID, new List<double>());
+                        centroidsTemp[cent][itemID].Add(m_ratings_train[cent][itemID]);
+                    }
 
+                }
                 if (centGood)// we can stop
                 {
                     toContinue = false;

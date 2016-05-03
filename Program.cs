@@ -47,8 +47,8 @@ namespace RecommenderSystem
             rs.Load("C:\\Users\\Tomer\\Documents\\GitHub\\Rec_Ass2\\ratings.dat", 0.95);
             
             
-            rs.TrainBaseModel(10);
-            //rs.TrainStereotypes(10);
+         //   rs.TrainBaseModel(10);
+            rs.TrainStereotypes(10);
             List<RecommenderSystem.PredictionMethod> lMethods = new List<RecommenderSystem.PredictionMethod>();
             lMethods.Add(RecommenderSystem.PredictionMethod.BaseModel);
             lMethods.Add(RecommenderSystem.PredictionMethod.Stereotypes);
