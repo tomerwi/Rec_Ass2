@@ -44,7 +44,8 @@ namespace RecommenderSystem
             //m_ratings_trainOfTrain = new Dictionary<string, Dictionary<string, double>>();
             m_ratings_validation = new Dictionary<string, Dictionary<string, double>>();
             m_centroids = new Dictionary<string, Dictionary<string, double>>();
-
+            m_centroidAvg = new Dictionary<string, double>();
+            m_rui_base_model = new Dictionary<string, Dictionary<string, double>>();
         }
 
         //load a datatset 
@@ -84,6 +85,7 @@ namespace RecommenderSystem
                     {
                         parseRatings(r);
                         splitToTrainAndTest(dTrainSetSize);
+                        mue = computeMue();
                         //calcAvgs();
                         //calcRAI();
                     }
@@ -400,11 +402,31 @@ namespace RecommenderSystem
         private double predictRatingStereoType(string userId, string itemId)
         {
             //Find the closest centroid
-            return 1;
+            if(m_centroids.Count ==0)
+                return m_userAvgs[userId];
+            double bestDis = 0;
+            string bestCentroid = null;
+            foreach(string centroid in m_centroids.Keys)
+            {
+                double dis = calcUserCentroidPearson(userId, centroid);
+                if (bestCentroid == null || bestDis < dis) //if we are in the first iteration or we found a closer centroid
+                {
+                    bestDis = dis;
+                    bestCentroid = centroid;
+                }
+            }
+            if(bestCentroid ==null)
+                return m_userAvgs[userId];
+            //what if the chosen centroid doesnt have the item?? return the avg of the cent? avg of the user? or in the loop above check only the centroids that have the item?
+            if (m_centroids[bestCentroid].ContainsKey(itemId))
+                return m_centroids[bestCentroid][itemId];
+            else
+                return m_centroidAvg[bestCentroid];
         }
 
         private double predictRatingBaseModel(string userId, string itemId)
         {
+            //how?!?
             return 1;
         }
 
@@ -554,14 +576,24 @@ namespace RecommenderSystem
         {
             //divide the train to train and validation -happens at load
 
-            double mue = computeMue(); //compute the avarage rating of all the users in the training data
-
+            //double mue = computeMue(); //compute the avarage rating of all the users in the training data
+            if (m_rui_base_model.Count > 0)
+                m_rui_base_model.Clear();
             Dictionary<string, double> buDic = new Dictionary<string, double>(); //string = userID, value = bu
             Dictionary<string, double> biDic = new Dictionary<string, double>();
 
             Dictionary<string, List<double>> puDic = new Dictionary<string, List<double>>(); //I think that each pu and qi is a vector of values
             Dictionary<string, List<double>> qiDic = new Dictionary<string, List<double>>();
-            
+            foreach(string user in m_ratings_train.Keys)
+            {
+                if (!m_rui_base_model.ContainsKey(user))
+                    m_rui_base_model.Add(user, new Dictionary<string, double>());
+                foreach(string item in m_ratings_train[user].Keys)
+                {
+                    if (!m_rui_base_model[user].ContainsKey(item))
+                        m_rui_base_model[user].Add(item, m_rui_base_model[user][item]);
+                }
+            }
             //init bu bi pu qi with random small vals
             //hilla
             foreach (string user in m_ratings.Keys)
@@ -680,11 +712,12 @@ namespace RecommenderSystem
 
             return totalRating/numOfMovies;
         }
-        private double calcUserCentroidPearson(string aID, string centroidID, double centroidAvg)
+        private double calcUserCentroidPearson(string aID, string centroidID)
         {
             double numerator = 0;
             double denominatorLeft = 0;
             double denominatorRight = 0;
+            double centroidAvg = m_centroidAvg[centroidID];
             foreach (string itemID in m_centroids[centroidID].Keys)
             {
                 if (!raiDic_AllUsers[aID].ContainsKey(itemID)) //only movies that they both rated and not take into account the movie that we want to predict
@@ -706,11 +739,12 @@ namespace RecommenderSystem
             Stopwatch stopwatch = new Stopwatch();
             TimeSpan timeout = new TimeSpan(0, 1, 0);
             stopwatch.Start();
-            if (this.m_centroids.Count > 0)
+            if (m_centroids.Count > 0)
                 m_centroids.Clear();
+            if (m_centroidAvg.Count > 0)
+                m_centroidAvg.Clear();
            //  Dictionary<string, Dictionary<string, double>> centroids = new Dictionary<string, Dictionary<string, double>>(); //I think it should be a field
             Dictionary<string, Dictionary<string, List<double>>> centroidsTemp = new Dictionary<string, Dictionary<string, List<double>>>();
-            Dictionary<string, double> centroidAvg = new Dictionary<string, double>();
             Random r = new Random();
             //List<string> initalCentroids = new List<string>();
             int numOfUsersInTrain = m_ratings_train.Keys.Count;
@@ -725,7 +759,7 @@ namespace RecommenderSystem
                     //initalCentroids.Add(userID);
                     m_centroids.Add(userID, new Dictionary<string, double>());
                     //m_centroids.Add(userID, m_ratings_train[userID]); //note that here we're creating another pointer to the user's items in train (and not copying)
-                    centroidAvg.Add(userID, m_userAvgs[userID]);
+                    m_centroidAvg.Add(userID, m_userAvgs[userID]);
                     centroidsTemp.Add(userID, new Dictionary<string, List<double>>());
                     foreach(string itemID in m_ratings_train[userID].Keys)
                     {
@@ -747,16 +781,16 @@ namespace RecommenderSystem
                 {
                     if (m_centroids.ContainsKey(userID))
                         continue;
-                    double minDis = 0;
+                    double bestDis = 0; //best distance is the max and not min (pearson value)
                     string bestCentroid = null;
                     foreach (string centroid in m_centroids.Keys)
                     {
                         //Compute perason distance from user to each centroid and attach him to the closest one
 
-                        double dis = calcUserCentroidPearson(userID, centroid, centroidAvg[centroid]);
-                        if (bestCentroid == null || minDis > dis) //if we are in the first iteration or we found a closer centroid
+                        double dis = calcUserCentroidPearson(userID, centroid);
+                        if (bestCentroid == null || bestDis < dis) //if we are in the first iteration or we found a closer centroid
                         {
-                            minDis = dis;
+                            bestDis = dis;
                             bestCentroid = centroid;
                         }
                     }
@@ -780,7 +814,7 @@ namespace RecommenderSystem
                     //int centCount = 1; 
                     double centSum = 0;
                     int centCount = 0;
-                    double centOldAvg = centroidAvg[centroid];
+                    double centOldAvg = m_centroidAvg[centroid];
 
                     foreach (string item in centroidsTemp[centroid].Keys)
                     {
@@ -790,7 +824,7 @@ namespace RecommenderSystem
                         centSum += centItemSum;
                     }
                     double centNewAvg = (centSum / centCount);
-                    centroidAvg[centroid] = centNewAvg;
+                    m_centroidAvg[centroid] = centNewAvg;
                     double numeratorPearson = 0;
                     double denominatorLeftPearson = 0;
                     double denominatorRightPearson = 0;
