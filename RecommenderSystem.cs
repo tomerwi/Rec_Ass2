@@ -991,6 +991,24 @@ namespace RecommenderSystem
                     randomRMSE += randomError;
                 }
 
+                if (lMethods.Contains(PredictionMethod.BaseModel))
+                {
+                    double randomRating = PredictRating(PredictionMethod.BaseModel, userID, movieID);
+                    if (randomRating == -1)
+                        continue;
+                    double randomError = Math.Pow(realRating - randomRating, 2);
+                    randomRMSE += randomError;
+                }
+                if (lMethods.Contains(PredictionMethod.Stereotypes))
+                {
+                    double randomRating = PredictRating(PredictionMethod.Stereotypes, userID, movieID);
+                    if (randomRating == -1)
+                        continue;
+                    double randomError = Math.Pow(realRating - randomRating, 2);
+                    randomRMSE += randomError;
+                }
+
+
                 iterationNumber++;
             }
             if (lMethods.Contains(PredictionMethod.Cosine))
