@@ -747,9 +747,11 @@ namespace RecommenderSystem
             double denominatorLeft = 0;
             double denominatorRight = 0;
             double centroidAvg = m_centroidAvg[centroidID];
-            foreach (string itemID in m_centroids[centroidID].Keys)
-            {
-                if (!raiDic_AllUsers[aID].ContainsKey(itemID)) //only movies that they both rated and not take into account the movie that we want to predict
+            //foreach (string itemID in m_centroids[centroidID].Keys) //should be foreach item in the user items! save running time
+            foreach (string itemID in raiDic_AllUsers[aID].Keys) //should be foreach item in the user items! save running time
+                {
+                //if (!raiDic_AllUsers[aID].ContainsKey(itemID))
+                if (!m_centroids[centroidID].ContainsKey(itemID)) //only movies that they both rated and not take into account the movie that we want to predict
                     continue;
                 double ruval = m_centroids[centroidID][itemID] - centroidAvg;
                 double raval = raiDic_AllUsers[aID][itemID];
@@ -764,6 +766,7 @@ namespace RecommenderSystem
         }
         public void TrainStereotypes(int cStereotypes)
         {
+            Dictionary<string, string> initialUsers = new Dictionary<string, string>(); //key = centorid. value = userID which first created the centroid
             //choosing random users as initial centorids
             Stopwatch stopwatch = new Stopwatch();
             TimeSpan timeout = new TimeSpan(0, 5, 0);
@@ -793,9 +796,10 @@ namespace RecommenderSystem
                     foreach(string itemID in m_ratings_train[userID].Keys)
                     {
                         m_centroids[userID].Add(itemID, m_ratings_train[userID][itemID]); //add the rating to the centroid
-                        centroidsTemp[userID].Add(itemID, new List<double>());
-                        centroidsTemp[userID][itemID].Add(m_ratings_train[userID][itemID]);
+                        centroidsTemp[userID].Add(itemID, new List<double>()); //every item can have more than one rating (by many users)
+                        centroidsTemp[userID][itemID].Add(m_ratings_train[userID][itemID]); //add rating to the item
                     }
+
                 }
                 else
                     i--; //try again
@@ -897,7 +901,8 @@ namespace RecommenderSystem
                 foreach (string cent in m_centroids.Keys)
                 {
                     centroidsTemp.Add(cent, new Dictionary<string, List<double>>());
-                    foreach(string itemID in m_centroids[cent].Keys)
+                    //foreach(string itemID in m_centroids[cent].Keys)// need to iterate only on the initial movies of the user when we first created the centorid. movies of other users can be added and it will throw exepetion
+                    foreach (string itemID in m_ratings_train[cent].Keys) // need to iterate only on the initial movies of the user when we first created the centorid. movies of other users can be added and it will throw exepetion
                     {
                         centroidsTemp[cent].Add(itemID, new List<double>());
                         centroidsTemp[cent][itemID].Add(m_ratings_train[cent][itemID]);
