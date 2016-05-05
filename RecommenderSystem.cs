@@ -130,7 +130,7 @@ namespace RecommenderSystem
                 if (locationOfUser < m_ratings_train.Keys.ToList().Count)
                 {
                     string userID = m_ratings_train.Keys.ToList()[locationOfUser];
-                    if (!alreadyChosen.Contains(userID))
+                    if (!alreadyChosen.Contains(userID) && m_ratings_train[userID].Keys.Count>1)
                     {
                         int k = splitUserToTrainAndTest(userID, r.NextDouble(),validation);
                         currentTestSize += k;
@@ -142,8 +142,10 @@ namespace RecommenderSystem
 
         private int splitUserToTrainAndTest(string userID, double precentOfMoviesToTest, bool validation) //returns number of movies moved to test set
         {
-            int numOfMovies = m_ratings_train[userID].Keys.Count;
+            int numOfMovies = (m_ratings_train[userID].Keys.Count-1);
             int k = (int)(numOfMovies * precentOfMoviesToTest);
+            if (k == numOfMovies)
+                k--;
             int numOfAdded = 0;
             if(!validation)
                 m_ratings_test.Add(userID, new Dictionary<string, double>());
@@ -153,7 +155,7 @@ namespace RecommenderSystem
             foreach (string movieID in m_ratings[userID].Keys)
             {
                 //int precentOfTest = m_ratings_test.Count / dataSetSize; //1) always be zero because its int. 2) m_rating.count gives the number of users, not the number of Dataset!
-                if (numOfAdded == k /*precentOfTest > 0.05*/)
+                if (numOfAdded >= k /*precentOfTest > 0.05*/)
                     break;
                 double rating = m_ratings[userID][movieID];
                 if(!validation)
@@ -595,6 +597,7 @@ namespace RecommenderSystem
             Random random = new Random();
             bool negative = random.NextDouble() > 0.5;
             double r = random.NextDouble();
+            r = r * (0.001);
             if (negative)
                 return (-1 * r);
             else
@@ -747,10 +750,8 @@ namespace RecommenderSystem
             double denominatorLeft = 0;
             double denominatorRight = 0;
             double centroidAvg = m_centroidAvg[centroidID];
-            //foreach (string itemID in m_centroids[centroidID].Keys) //should be foreach item in the user items! save running time
-            foreach (string itemID in raiDic_AllUsers[aID].Keys) //should be foreach item in the user items! save running time
-                {
-                //if (!raiDic_AllUsers[aID].ContainsKey(itemID))
+            foreach (string itemID in raiDic_AllUsers[aID].Keys) 
+            {
                 if (!m_centroids[centroidID].ContainsKey(itemID)) //only movies that they both rated and not take into account the movie that we want to predict
                     continue;
                 double ruval = m_centroids[centroidID][itemID] - centroidAvg;
@@ -928,7 +929,88 @@ namespace RecommenderSystem
 
 
         //Compute RMSE on the train or on the test?
+        
         public Dictionary<PredictionMethod, double> ComputeRMSE(List<PredictionMethod> lMethods, int cTrials)
+        {
+            Dictionary<PredictionMethod, double> ans = new Dictionary<PredictionMethod, double>();
+            if (this.m_ratings.Count == 0)
+            {
+                Console.WriteLine("No ratings in memory");
+                return ans;
+            }
+            Dictionary<int, HashSet<int>> used = new Dictionary<int, HashSet<int>>();
+            int iterationNumber = 0;
+            Random r = new Random();
+            double pearsonRMSE = 0;
+            double cosineRMSE = 0;
+            double randomRMSE = 0;
+            foreach(string userID in m_ratings_test.Keys)
+            {
+                foreach (string movieID in m_ratings_test[userID].Keys)
+                {
+                    if (iterationNumber >= cTrials)
+                        break;
+                    double realRating = m_ratings[userID][movieID];
+
+                    if (lMethods.Contains(PredictionMethod.Pearson))
+                    {
+                        double pearsonRating = PredictRating(PredictionMethod.Pearson, userID, movieID);
+                        if (pearsonRating == -1) //invalid user or movie
+                            continue;
+                        double pearsonError = Math.Pow(realRating - pearsonRating,2);
+                        pearsonRMSE += pearsonError;
+                    }
+
+                    if (lMethods.Contains(PredictionMethod.Cosine))
+                    {
+                        double cosineRating = PredictRating(PredictionMethod.Cosine, userID, movieID);
+                        if (cosineRating == -1)
+                            continue;
+                        double cosineError = Math.Pow(realRating - cosineRating,2);
+                        cosineRMSE += cosineError;
+                    }
+
+                    if (lMethods.Contains(PredictionMethod.Random))
+                    {
+                        double randomRating = PredictRating(PredictionMethod.Random, userID, movieID);
+                        if (randomRating == -1)
+                            continue;
+                        double randomError = Math.Pow(realRating - randomRating,2);
+                        randomRMSE += randomError;
+                    }
+
+                    if (lMethods.Contains(PredictionMethod.BaseModel))
+                    {
+                        double randomRating = PredictRating(PredictionMethod.BaseModel, userID, movieID);
+                        if (randomRating == -1)
+                            continue;
+                        double randomError = Math.Pow(realRating - randomRating, 2);
+                        randomRMSE += randomError;
+                    }
+                    if (lMethods.Contains(PredictionMethod.Stereotypes))
+                    {
+                        double randomRating = PredictRating(PredictionMethod.Stereotypes, userID, movieID);
+                        if (randomRating == -1)
+                            continue;
+                        double randomError = Math.Pow(realRating - randomRating, 2);
+                        randomRMSE += randomError;
+                    }
+
+
+                    iterationNumber++;
+                }
+            
+            }
+            if (lMethods.Contains(PredictionMethod.Cosine))
+                ans.Add(PredictionMethod.Cosine, Math.Sqrt(cosineRMSE / cTrials));
+            if (lMethods.Contains(PredictionMethod.Pearson))
+                ans.Add(PredictionMethod.Pearson, Math.Sqrt(pearsonRMSE / cTrials));
+            if (lMethods.Contains(PredictionMethod.Random))
+                ans.Add(PredictionMethod.Random, Math.Sqrt(randomRMSE / cTrials));
+            return ans;
+        }
+
+        /*        public Dictionary<PredictionMethod, double> ComputeRMSE(List<PredictionMethod> lMethods, int cTrials)
         {
             Dictionary<PredictionMethod, double> ans = new Dictionary<PredictionMethod, double>();
             if (this.m_ratings.Count == 0)
@@ -944,6 +1026,7 @@ namespace RecommenderSystem
             double randomRMSE = 0;
             while (iterationNumber < cTrials)
             {
+                //should we run on the test set instead of random users?
                 bool foundNotUsed = false;
                 string userID = "";
                 string movieID = "";
@@ -1018,6 +1101,6 @@ namespace RecommenderSystem
             if (lMethods.Contains(PredictionMethod.Random))
                 ans.Add(PredictionMethod.Random, Math.Sqrt(randomRMSE / cTrials));
             return ans;
-        }
+        }*/
     }
 }
