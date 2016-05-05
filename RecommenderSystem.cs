@@ -789,7 +789,22 @@ namespace RecommenderSystem
                 string userID = m_ratings_train.Keys.ToList()[location];
                 if (!m_centroids.ContainsKey(userID))
                 {
-                    //initalCentroids.Add(userID);
+                    //check that the centroids are different from each other
+                    bool findAnother = false;
+                    foreach(string user in m_centroids.Keys)
+                    {
+                        double pearson = calcWPearson(userID, user, "");
+                        if (pearson > 0.5) //check this number!!!!!
+                        {
+                            findAnother = true;
+                            break;
+                        }
+                    }
+                    if(findAnother)
+                    {
+                        i--;
+                        continue;
+                    }
                     m_centroids.Add(userID, new Dictionary<string, double>());
                     //m_centroids.Add(userID, m_ratings_train[userID]); //note that here we're creating another pointer to the user's items in train (and not copying)
                     m_centroidAvg.Add(userID, m_userAvgs[userID]);
