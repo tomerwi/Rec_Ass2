@@ -959,6 +959,8 @@ namespace RecommenderSystem
             double pearsonRMSE = 0;
             double cosineRMSE = 0;
             double randomRMSE = 0;
+            double baseModelRMSE = 0;
+            double stereoTypeRMSE = 0;
             foreach(string userID in m_ratings_test.Keys)
             {
                 foreach (string movieID in m_ratings_test[userID].Keys)
@@ -996,19 +998,19 @@ namespace RecommenderSystem
 
                     if (lMethods.Contains(PredictionMethod.BaseModel))
                     {
-                        double randomRating = PredictRating(PredictionMethod.BaseModel, userID, movieID);
-                        if (randomRating == -1)
+                        double baseRating = PredictRating(PredictionMethod.BaseModel, userID, movieID);
+                        if (baseRating == -1)
                             continue;
-                        double randomError = Math.Pow(realRating - randomRating, 2);
-                        randomRMSE += randomError;
+                        double baseError = Math.Pow(realRating - baseRating, 2);
+                        baseModelRMSE += baseError;
                     }
                     if (lMethods.Contains(PredictionMethod.Stereotypes))
                     {
-                        double randomRating = PredictRating(PredictionMethod.Stereotypes, userID, movieID);
-                        if (randomRating == -1)
+                        double stereoRating = PredictRating(PredictionMethod.Stereotypes, userID, movieID);
+                        if (stereoRating == -1)
                             continue;
-                        double randomError = Math.Pow(realRating - randomRating, 2);
-                        randomRMSE += randomError;
+                        double stereoError = Math.Pow(realRating - stereoRating, 2);
+                        stereoTypeRMSE += stereoError;
                     }
 
 
@@ -1022,6 +1024,10 @@ namespace RecommenderSystem
                 ans.Add(PredictionMethod.Pearson, Math.Sqrt(pearsonRMSE / cTrials));
             if (lMethods.Contains(PredictionMethod.Random))
                 ans.Add(PredictionMethod.Random, Math.Sqrt(randomRMSE / cTrials));
+            if (lMethods.Contains(PredictionMethod.BaseModel))
+                ans.Add(PredictionMethod.BaseModel, Math.Sqrt(baseModelRMSE / cTrials));
+            if (lMethods.Contains(PredictionMethod.Stereotypes))
+                ans.Add(PredictionMethod.Stereotypes, Math.Sqrt(stereoTypeRMSE / cTrials));
             return ans;
         }
 
