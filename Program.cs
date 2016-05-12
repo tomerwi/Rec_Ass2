@@ -50,7 +50,7 @@ namespace RecommenderSystem
            rs.TrainBaseModel(10);
             rs.TrainStereotypes(10);
             List<RecommenderSystem.PredictionMethod> lMethods = new List<RecommenderSystem.PredictionMethod>();
-            //lMethods.Add(RecommenderSystem.PredictionMethod.BaseModel);
+            lMethods.Add(RecommenderSystem.PredictionMethod.BaseModel);
             lMethods.Add(RecommenderSystem.PredictionMethod.Stereotypes);
             //lMethods.Add(RecommenderSystem.PredictionMethod.Pearson);
             //lMethods.Add(RecommenderSystem.PredictionMethod.Cosine);
