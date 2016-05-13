@@ -851,6 +851,7 @@ namespace RecommenderSystem
                             if (!centroidsTemp[bestCentroid].ContainsKey(itemID))
                                 centroidsTemp[bestCentroid].Add(itemID, new List<double>());
                             centroidsTemp[bestCentroid][itemID].Add(m_ratings_train[userID][itemID]);
+                            //tomer: maybe here we need to remove the movies of the user from the former centorid
                         }
 
                     }
@@ -882,7 +883,7 @@ namespace RecommenderSystem
                         double centItemSum = centroidsTemp[centroid][item].Sum();
                         int centItemCount = centroidsTemp[centroid][item].Count;
                         double newri = (centItemSum / centItemCount);
-                        if (!m_centroids[centroid].ContainsKey(item))
+                        if (!m_centroids[centroid].ContainsKey(item)) //tomer: and if it doesnt contains the key?
                             m_centroids[centroid].Add(item, newri);
                         else
                         {
