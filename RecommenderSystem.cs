@@ -785,7 +785,7 @@ namespace RecommenderSystem
             for (int i=0;i<cStereotypes;i++)
             {
                 double random = r.NextDouble();
-                int location = (int) (random * numOfUsersInTrain) -1;
+                int location = (int) ((random * numOfUsersInTrain) -1);
                 string userID = m_ratings_train.Keys.ToList()[location];
                 if (!m_centroids.ContainsKey(userID))
                 {
