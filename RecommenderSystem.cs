@@ -918,11 +918,12 @@ namespace RecommenderSystem
                 foreach (string cent in m_centroids.Keys)
                 {
                     centroidsTemp.Add(cent, new Dictionary<string, List<double>>());
-                    //foreach(string itemID in m_centroids[cent].Keys)// need to iterate only on the initial movies of the user when we first created the centorid. movies of other users can be added and it will throw exepetion
-                    foreach (string itemID in m_ratings_train[cent].Keys) // need to iterate only on the initial movies of the user when we first created the centorid. movies of other users can be added and it will throw exepetion
+                    foreach(string itemID in m_centroids[cent].Keys)// need to iterate only on the initial movies of the user when we first created the centorid. movies of other users can be added and it will throw exepetion
+                    //foreach (string itemID in m_ratings_train[cent].Keys) // need to iterate only on the initial movies of the user when we first created the centorid. movies of other users can be added and it will throw exepetion
                     {
                         centroidsTemp[cent].Add(itemID, new List<double>());
-                        centroidsTemp[cent][itemID].Add(m_ratings_train[cent][itemID]);
+                        //centroidsTemp[cent][itemID].Add(m_ratings_train[cent][itemID]);
+                        centroidsTemp[cent][itemID].Add(m_centroids[cent][itemID]);
                     }
 
                 }
