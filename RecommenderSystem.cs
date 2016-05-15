@@ -780,12 +780,12 @@ namespace RecommenderSystem
             Dictionary<string, Dictionary<string, List<double>>> centroidsTemp = new Dictionary<string, Dictionary<string, List<double>>>();
             Random r = new Random();
             //List<string> initalCentroids = new List<string>();
-            int numOfUsersInTrain = m_ratings_train.Keys.Count;
+            int numOfUsersInTrain = m_ratings_train.Keys.Count -1;
             
             for (int i=0;i<cStereotypes;i++)
             {
                 double random = r.NextDouble();
-                int location = (int) ((random * numOfUsersInTrain) -1);
+                int location = (int) (random * numOfUsersInTrain);
                 string userID = m_ratings_train.Keys.ToList()[location];
                 if (!m_centroids.ContainsKey(userID))
                 {
