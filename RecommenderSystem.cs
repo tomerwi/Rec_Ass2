@@ -770,7 +770,7 @@ namespace RecommenderSystem
             Dictionary<string, string> initialUsers = new Dictionary<string, string>(); //key = centorid. value = userID which first created the centroid
             //choosing random users as initial centorids
             Stopwatch stopwatch = new Stopwatch();
-            TimeSpan timeout = new TimeSpan(0, 5, 0);
+            TimeSpan timeout = new TimeSpan(0, 3, 0);
             stopwatch.Start();
             if (m_centroids.Count > 0)
                 m_centroids.Clear();
@@ -782,7 +782,7 @@ namespace RecommenderSystem
             //List<string> initalCentroids = new List<string>();
             int numOfUsersInTrain = m_ratings_train.Keys.Count -1;
             
-            for (int i=0;i<cStereotypes;i++)
+            while (m_centroids.Keys.Count < cStereotypes)
             {
                 double random = r.NextDouble();
                 int location = (int) (random * numOfUsersInTrain);
@@ -802,10 +802,7 @@ namespace RecommenderSystem
                         }
                     }
                     if(tooCloseToAnotherCentroid)
-                    {
-                        i--;
                         continue;
-                    }
                     
                     m_centroids.Add(userID, new Dictionary<string, double>());
                     //m_centroids.Add(userID, m_ratings_train[userID]); //note that here we're creating another pointer to the user's items in train (and not copying)
@@ -819,8 +816,6 @@ namespace RecommenderSystem
                     }
 
                 }
-                else
-                    i--; //try again
             }
 
             bool toContinue = true;
