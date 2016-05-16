@@ -44,8 +44,8 @@ namespace RecommenderSystem
         static void Assignment2()
         {
             RecommenderSystem rs = new RecommenderSystem();
-            //rs.Load("C:\\Users\\Tomer\\Documents\\GitHub\\Rec_Ass2\\ratings.dat", 0.95);
-            rs.Load("ratings.dat", 0.95);
+            rs.Load("C:\\Users\\Tomer\\Documents\\GitHub\\Rec_Ass2\\ratings.dat", 0.95);
+            //rs.Load("ratings.dat", 0.95);
 
 
             rs.TrainBaseModel(10);

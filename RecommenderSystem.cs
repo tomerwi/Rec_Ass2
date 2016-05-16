@@ -789,22 +789,24 @@ namespace RecommenderSystem
                 string userID = m_ratings_train.Keys.ToList()[location];
                 if (!m_centroids.ContainsKey(userID))
                 {
+                    
                     //check that the centroids are different from each other
-                    bool findAnother = false;
+                    bool tooCloseToAnotherCentroid = false;
                     foreach(string user in m_centroids.Keys)
                     {
                         double pearson = calcWPearson(userID, user, "");
                         if (pearson > 0.5) //check this number!!!!!
                         {
-                            findAnother = true;
+                            tooCloseToAnotherCentroid = true;
                             break;
                         }
                     }
-                    if(findAnother)
+                    if(tooCloseToAnotherCentroid)
                     {
                         i--;
                         continue;
                     }
+                    
                     m_centroids.Add(userID, new Dictionary<string, double>());
                     //m_centroids.Add(userID, m_ratings_train[userID]); //note that here we're creating another pointer to the user's items in train (and not copying)
                     m_centroidAvg.Add(userID, m_userAvgs[userID]);
@@ -903,11 +905,11 @@ namespace RecommenderSystem
                     {
                         double denominatorPearson = (Math.Sqrt(denominatorLeftPearson)) * (Math.Sqrt(denominatorRightPearson));
                         if (denominatorPearson == 0)
-                            centGood = false;
+                            centGood = true;
                         else
                         {
                             double pearsonVal = numeratorPearson / denominatorPearson;
-                            if (pearsonVal < 0.99) //check vals!
+                            if (pearsonVal < 0.85) //check vals!
                                 centGood = false;
                         }
                     }
