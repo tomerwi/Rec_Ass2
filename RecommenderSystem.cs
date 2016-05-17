@@ -149,10 +149,8 @@ namespace RecommenderSystem
         {
             int numOfMovies = (m_ratings_train[userID].Keys.Count-1);
             int k = (int)(numOfMovies * precentOfMoviesToTest);
-            if (k == numOfMovies)
-                k--; //k can be negative here
-            if (k < 0)
-                Console.WriteLine("HELP");
+            //if (k == numOfMovies) never happens
+            //    k--; //k can be negative here
             int numOfAdded = 0;
             if (numOfAdded < k)
             {
@@ -177,8 +175,6 @@ namespace RecommenderSystem
             }
             if (m_ratings_train[userID].Count == 0) //cant be true
                 m_ratings_train.Remove(userID);
-            if (numOfAdded > 100)
-                Console.WriteLine("Tomer Test big numofadded");
             return numOfAdded;
         }
        
@@ -698,11 +694,11 @@ namespace RecommenderSystem
         {
             double totalRating  = 0;
             double numOfMovies = 0;
-            foreach(string user in m_ratings_train.Keys)
+            foreach(string user in m_ratings.Keys)
             {
-                foreach(string movie in m_ratings_train[user].Keys)
+                foreach(string movie in m_ratings[user].Keys)
                 {
-                    totalRating = totalRating + m_ratings_train[user][movie];
+                    totalRating = totalRating + m_ratings[user][movie];
                     numOfMovies++;
                 }
             }
