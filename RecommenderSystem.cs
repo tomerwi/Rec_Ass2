@@ -149,8 +149,6 @@ namespace RecommenderSystem
         {
             int numOfMovies = (m_ratings_train[userID].Keys.Count-1);
             int k = (int)(numOfMovies * precentOfMoviesToTest);
-            //if (k == numOfMovies) never happens
-            //    k--; //k can be negative here
             int numOfAdded = 0;
             if (numOfAdded < k)
             {
@@ -576,19 +574,12 @@ namespace RecommenderSystem
         //new E2
         public void TrainBaseModel(int cFeatures)
         {
-            //divide the train to train and validation -happens at load
-
-            //double mue = computeMue(); //compute the avarage rating of all the users in the training data
-            /*if (m_rui_base_model.Count > 0)
-                m_rui_base_model.Clear();*/
-            buDic = new Dictionary<string, double>(); //string = userID, value = bu
+            buDic = new Dictionary<string, double>();
             biDic = new Dictionary<string, double>();
 
-            puDic = new Dictionary<string, List<double>>(); //I think that each pu and qi is a vector of values
+            puDic = new Dictionary<string, List<double>>(); 
             qiDic = new Dictionary<string, List<double>>();
-  
-            //init bu bi pu qi with random small vals
-            //hilla
+
             foreach (string user in m_ratings.Keys)
             {
                 buDic.Add(user, getSmallRandomNumber());
@@ -615,9 +606,6 @@ namespace RecommenderSystem
             }
             double gamma = 0.01;
             double lamda = 0.05;
-           
-           // double eTrain = 0;
-           
 
             double bestRMSE = Double.MaxValue;
              
@@ -631,15 +619,12 @@ namespace RecommenderSystem
                         double rui = m_ratings_train[userID][movieID];
                         double bi = biDic[movieID];
                         double bu = buDic[userID];
-                        //double pu = 0.04; //where can we get this number?
-                        //double qi = 0.05; //where can we get this number?
-                        double puqi = 0;//hilla
-                        for(int i = 0; i < cFeatures; i++)//hilla
+                        double puqi = 0;
+                        for(int i = 0; i < cFeatures; i++)
                         {
                             puqi += (puDic[userID][i] * qiDic[movieID][i]);
                         }
                         double eui = rui - mue - bi - bu - puqi;
-                        //eTrain += eui;
 
                         //update parameters:
                         buDic[userID] = bu + (gamma * (eui - (lamda * bu)));
@@ -653,7 +638,6 @@ namespace RecommenderSystem
                 }
                 //compute validation error
                 double n = 0;
-                //double currentE_validation = 0; //the current total error
                 double currentE_Squre = 0;
                 
                 foreach (string userID in m_ratings_validation.Keys)
@@ -671,7 +655,6 @@ namespace RecommenderSystem
                             puqi += (puDic[userID][i] * qiDic[movieID][i]);
                         }
                         double eui = rui - mue - bi - bu - puqi;
-                        //currentE_validation += eui;
 
                         //for RMSE
                         double euiSqure = Math.Pow(eui, 2);
@@ -737,10 +720,8 @@ namespace RecommenderSystem
                 m_centroids.Clear();
             if (m_centroidAvg.Count > 0)
                 m_centroidAvg.Clear();
-           //  Dictionary<string, Dictionary<string, double>> centroids = new Dictionary<string, Dictionary<string, double>>(); //I think it should be a field
             Dictionary<string, Dictionary<string, List<double>>> centroidsTemp = new Dictionary<string, Dictionary<string, List<double>>>();
             Random r = new Random();
-            //List<string> initalCentroids = new List<string>();
             int numOfUsersInTrain = m_ratings_train.Keys.Count -1;
             
             while (m_centroids.Keys.Count < cStereotypes)
@@ -756,7 +737,7 @@ namespace RecommenderSystem
                     foreach(string user in m_centroids.Keys)
                     {
                         double pearson = calcWPearson(userID, user, "");
-                        if (pearson > 0.5) //check this number!!!!!
+                        if (pearson > 0.4) //check this number!!!!!
                         {
                             tooCloseToAnotherCentroid = true;
                             break;
@@ -766,7 +747,6 @@ namespace RecommenderSystem
                         continue;
                     
                     m_centroids.Add(userID, new Dictionary<string, double>());
-                    //m_centroids.Add(userID, m_ratings_train[userID]); //note that here we're creating another pointer to the user's items in train (and not copying)
                     m_centroidAvg.Add(userID, m_userAvgs[userID]);
                     centroidsTemp.Add(userID, new Dictionary<string, List<double>>());
                     foreach(string itemID in m_ratings_train[userID].Keys)
@@ -783,7 +763,6 @@ namespace RecommenderSystem
             while (toContinue)
             {
                 //Computing distance of users to centroids
-                // Dictionary<string, string> usertoCentroid = new Dictionary<string, string>(); //key = userID. value = userID of the centroid
                 foreach (string userID in m_ratings_train.Keys)
                 {
                     if (m_centroids.ContainsKey(userID))
@@ -793,7 +772,6 @@ namespace RecommenderSystem
                     foreach (string centroid in m_centroids.Keys)
                     {
                         //Compute perason distance from user to each centroid and attach him to the closest one
-
                         double dis = calcUserCentroidPearson(userID, centroid);
                         if (bestCentroid == null || bestDis < dis) //if we are in the first iteration or we found a closer centroid
                         {
@@ -801,9 +779,8 @@ namespace RecommenderSystem
                             bestCentroid = centroid;
                         }
                     }
-                    if (bestCentroid != null) //we need to do it after all the users were iterated??
+                    if (bestCentroid != null) 
                     {
-                        // usertoCentroid.Add(userID, bestCentroid);
                         foreach (string itemID in m_ratings_train[userID].Keys)
                         {
                             if (!centroidsTemp[bestCentroid].ContainsKey(itemID))
@@ -818,8 +795,6 @@ namespace RecommenderSystem
                 //calc the avg of the cent
                 foreach (string centroid in centroidsTemp.Keys)
                 {
-                    //double centSum = centroidAvg[centroid];//!!!
-                    //int centCount = 1; 
                     double centSum = 0;
                     int centCount = 0;
                     double centOldAvg = m_centroidAvg[centroid];
@@ -841,7 +816,7 @@ namespace RecommenderSystem
                         double centItemSum = centroidsTemp[centroid][item].Sum();
                         int centItemCount = centroidsTemp[centroid][item].Count;
                         double newri = (centItemSum / centItemCount);
-                        if (!m_centroids[centroid].ContainsKey(item)) //tomer: and if it doesnt contains the key?
+                        if (!m_centroids[centroid].ContainsKey(item)) 
                             m_centroids[centroid].Add(item, newri);
                         else
                         {
@@ -865,23 +840,20 @@ namespace RecommenderSystem
                         else
                         {
                             double pearsonVal = numeratorPearson / denominatorPearson;
-                            if (pearsonVal < 0.85) //check vals!
+                            if (pearsonVal < 0.95) //check vals!
                                 centGood = false;
                         }
                     }
 
                 }
-                //!!
                 centroidsTemp.Clear();
                 foreach (string cent in m_centroids.Keys)
                 {
                     centroidsTemp.Add(cent, new Dictionary<string, List<double>>());
                     foreach(string itemID in m_centroids[cent].Keys)// need to iterate only on the initial movies of the user when we first created the centorid. movies of other users can be added and it will throw exepetion
-                    //foreach (string itemID in m_ratings_train[cent].Keys) // need to iterate only on the initial movies of the user when we first created the centorid. movies of other users can be added and it will throw exepetion
                     {
                         centroidsTemp[cent].Add(itemID, new List<double>());
-                        //centroidsTemp[cent][itemID].Add(m_ratings_train[cent][itemID]);
-                        centroidsTemp[cent][itemID].Add(m_centroids[cent][itemID]);
+                        centroidsTemp[cent][itemID].Add(m_centroids[cent][itemID]); //maybe remove this
                     }
 
                 }
